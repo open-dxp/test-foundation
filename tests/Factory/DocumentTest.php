@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation\Tests\Factory;
 
-use App\Controller\DefaultController;
+use OpenDxp\TestFoundation\Controller\DefaultController;
 use OpenDxp\Model\Document;
 use OpenDxp\Model\Document\Hardlink;
 use OpenDxp\Model\Document\Link;

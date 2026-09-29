@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation\Tests\Factory;
 
-use App\Controller\DefaultController;
+use OpenDxp\TestFoundation\Controller\DefaultController;
 use OpenDxp\Bundle\StaticRoutesBundle\Model\Staticroute;
 use OpenDxp\Model\Asset\Folder as AssetFolder;
 use OpenDxp\Model\Asset\Image;
