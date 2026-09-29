@@ -1,0 +1,26 @@
+{
+    "name": "open-dxp/test-foundation",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
+    "description": "Everything a bundle or a project needs to have tests against OpenDXP.",
+    "require": {
+        "php": "~8.3.0 || ~8.4.0 || ~8.5.0",
+        "dama/doctrine-test-bundle": "^8.6",
+        "mtdowling/jmespath.php": "^2.8",
+        "open-dxp/opendxp": "^1.4",
+        "pestphp/pest": "^4.7",
+        "playwright-php/playwright": "^1.5",
+        "playwright-php/playwright-symfony": "^0.11",
+        "zenstruck/browser": "^1.12",
+        "zenstruck/foundry": "^2.13"
+    },
+    "autoload": {
+        "psr-4": {
+            "OpenDxp\\TestFoundation\\": "src/"
+        }
+    },
+    "extra": {
+        "app-template": "app"
+    },
+    "minimum-stability": "stable"
+}
