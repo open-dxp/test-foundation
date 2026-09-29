@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OpenDxp\TestFoundation\Factory;
+
+use OpenDxp\Model\Document;
+use OpenDxp\Model\Document\Hardlink;
+
+/**
+ * @extends AbstractDocumentFactory<Hardlink>
+ */
+final class HardlinkFactory extends AbstractDocumentFactory
+{
+    public static function class(): string
+    {
+        return Hardlink::class;
+    }
+
+    /**
+     * The document a hardlink mirrors.
+     */
+    public function to(Document $source): static
+    {
+        return $this->with([
+            'sourceId'             => $source->getId(),
+            'propertiesFromSource' => true,
+            'childrenFromSource'   => true,
+        ]);
+    }
+
+    protected function defaults(): array
+    {
+        return [
+            ...parent::defaults(),
+            'key'  => sprintf('hardlink-%s', self::faker()->unique()->numerify('##########')),
+            'type' => 'hardlink',
+        ];
+    }
+}

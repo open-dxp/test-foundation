@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OpenDxp\TestFoundation\Factory;
+
+use OpenDxp\Model\User;
+use OpenDxp\Tool\Authentication;
+
+/**
+ * @extends AbstractSavingFactory<User>
+ */
+final class UserFactory extends AbstractSavingFactory
+{
+    public const string PASSWORD = 'test-password';
+
+    public static function class(): string
+    {
+        return User::class;
+    }
+
+    public function admin(): static
+    {
+        return $this->with(['admin' => true]);
+    }
+
+    protected function defaults(): array
+    {
+        return [
+            'name'     => sprintf('user-%s', self::faker()->unique()->numerify('##########')),
+            'admin'    => false,
+            'parentId' => 0,
+        ];
+    }
+
+    protected function initialize(): static
+    {
+        return parent::initialize()->afterInstantiate(
+            static fn (User $user) => $user->setPassword(
+                Authentication::getPasswordHash($user->getName(), self::PASSWORD),
+            ),
+        );
+    }
+}

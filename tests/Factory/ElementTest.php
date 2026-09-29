@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OpenDxp\TestFoundation\Tests\Factory;
+
+use App\Controller\DefaultController;
+use OpenDxp\Bundle\StaticRoutesBundle\Model\Staticroute;
+use OpenDxp\Model\Asset\Folder as AssetFolder;
+use OpenDxp\Model\Asset\Image;
+use OpenDxp\Model\DataObject\Folder as ObjectFolder;
+use OpenDxp\Model\User;
+use OpenDxp\TestFoundation\Factory\AssetFolderFactory;
+use OpenDxp\TestFoundation\Factory\ImageAssetFactory;
+use OpenDxp\TestFoundation\Factory\ObjectFolderFactory;
+use OpenDxp\TestFoundation\Factory\StaticRouteFactory;
+use OpenDxp\TestFoundation\Factory\UserFactory;
+
+it('writes an image asset with a file behind it', function () {
+    $image = ImageAssetFactory::createOne();
+
+    expect($image)->toBeInstanceOf(Image::class)
+        ->and($image->getId())->toBeGreaterThan(0)
+        ->and($image->getFileSize())->toBeGreaterThan(0);
+});
+
+it('puts an asset into a folder', function () {
+    $folder = AssetFolderFactory::createOne(['filename' => 'photos']);
+    $image = ImageAssetFactory::new()->childOf($folder)->create();
+
+    expect($folder)->toBeInstanceOf(AssetFolder::class)
+        ->and($image->getParentId())->toBe($folder->getId())
+        ->and($image->getFullPath())->toStartWith('/photos/');
+});
+
+it('writes an object folder', function () {
+    $folder = ObjectFolderFactory::createOne(['key' => 'products']);
+
+    expect($folder)->toBeInstanceOf(ObjectFolder::class)
+        ->and($folder->getFullPath())->toBe('/products');
+});
+
+it('writes a user that can sign in', function () {
+    $user = UserFactory::createOne();
+
+    expect($user)->toBeInstanceOf(User::class)
+        ->and($user->getId())->toBeGreaterThan(0)
+        ->and($user->isAdmin())->toBeFalse()
+        ->and(UserFactory::new()->admin()->create()->isAdmin())->toBeTrue();
+});
+
+it('writes a static route', function () {
+    $route = StaticRouteFactory::new()
+        ->at('/news/%text', '/news/%text')
+        ->controller(DefaultController::class, 'defaultAction')
+        ->create(['name' => 'news_detail']);
+
+    expect($route)->toBeInstanceOf(Staticroute::class)
+        ->and($route->getId())->not->toBeNull()
+        ->and(Staticroute::getByName('news_detail')->getPattern())->toBe('/news/%text')
+        ->and($route->getController())->toBe(DefaultController::class . '::defaultAction');
+});

@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use OpenDxp\Bootstrap;
+use OpenDxp\Console\Application;
+use Symfony\Component\Dotenv\Dotenv;
+
+defined('OPENDXP_PROJECT_ROOT') || define('OPENDXP_PROJECT_ROOT', dirname(__DIR__));
+defined('OPENDXP_CONSOLE') || define('OPENDXP_CONSOLE', true);
+
+require OPENDXP_PROJECT_ROOT . '/vendor/autoload_runtime.php';
+
+(new Dotenv())->loadEnv(OPENDXP_PROJECT_ROOT . '/.env');
+
+return static fn (): Application => new Application(Bootstrap::startupCli());

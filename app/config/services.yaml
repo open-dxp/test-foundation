@@ -1,0 +1,11 @@
+parameters:
+    secret: '%env(APP_SECRET)%'
+    default_database_server_version: '%env(DATABASE_SERVER_VERSION)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'

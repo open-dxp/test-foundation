@@ -1,0 +1,7 @@
+framework:
+    test: true
+    profiler:
+        enabled: false
+    mailer:
+        transports:
+            main: 'null://null'

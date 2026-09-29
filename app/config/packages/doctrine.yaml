@@ -1,0 +1,12 @@
+doctrine:
+    dbal:
+        connections:
+            default:
+                url: '%env(DATABASE_URL)%'
+                server_version: '%env(DATABASE_SERVER_VERSION)%'
+
+                logging: false
+                profiling: false
+
+                mapping_types:
+                    enum: string

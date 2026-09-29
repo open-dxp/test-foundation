@@ -1,0 +1,39 @@
+doctrine:
+    dbal:
+        connections:
+            default:
+                # Every test runs inside a transaction that is rolled back afterwards, and a test
+                # that opens one of its own needs a savepoint rather than a second transaction.
+                use_savepoints: true
+
+opendxp:
+    config_location:
+        image_thumbnails:
+            write_target: { type: 'settings-store' }
+        video_thumbnails:
+            write_target: { type: 'settings-store' }
+        document_types:
+            write_target: { type: 'settings-store' }
+        predefined_properties:
+            write_target: { type: 'settings-store' }
+        predefined_asset_metadata:
+            write_target: { type: 'settings-store' }
+        perspectives:
+            write_target: { type: 'settings-store' }
+        custom_views:
+            write_target: { type: 'settings-store' }
+        object_custom_layouts:
+            write_target: { type: 'settings-store' }
+        system_settings:
+            write_target: { type: 'settings-store' }
+            read_target: { type: 'settings-store' }
+        select_options:
+            write_target: { type: 'settings-store' }
+            read_target: { type: 'settings-store' }
+
+playwright:
+    assets:
+        # A real browser asks for the images and scripts a page references. OpenDXP serves those of
+        # its bundles under /bundles, which is not among the prefixes the package assumes, so they
+        # would go through the router and answer with a 404.
+        prefixes: ['/assets', '/build', '/bundles', '/_framework/ux']

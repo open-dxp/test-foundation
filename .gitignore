@@ -1,0 +1,8 @@
+/vendor/
+/composer.lock
+
+# only the *.dist configuration is staged
+/phpunit.xml
+/.phpunit.cache/
+
+.php-cs-fixer.cache
