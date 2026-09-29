@@ -7,8 +7,6 @@ doctrine:
                 use_savepoints: true
 
 services:
-    # A document that names no controller renders through this one. It is registered here rather
-    # than in the application, so nothing has to be put beside the package under test.
     OpenDxp\TestFoundation\Controller\DefaultController:
         autowire: true
         autoconfigure: true
