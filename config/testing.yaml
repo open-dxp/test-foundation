@@ -34,7 +34,6 @@ opendxp:
             write_target: { type: 'settings-store' }
         system_settings:
             write_target: { type: 'settings-store' }
-            read_target: { type: 'settings-store' }
         select_options:
             write_target: { type: 'settings-store' }
 

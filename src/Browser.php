@@ -49,11 +49,12 @@ final class Browser
         ))();
     }
 
-    /**
-     * A browser that has not gone anywhere yet, for a request that is not a plain page visit.
-     */
     public static function start(): KernelBrowser
     {
+        // The test case leaves a request on the stack, and the kernel would keep that one as the
+        // main request instead of the one being sent.
+        Container::requestStack()->pop();
+
         return new KernelBrowser(Container::testClient());
     }
 }
