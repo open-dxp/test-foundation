@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation\PHPUnit;
 
-use OpenDxp\TestFoundation\ClassDefinitions;
+use OpenDxp\Test\ClassDefinitions;
+use OpenDxp\Test\Fieldcollections;
+use OpenDxp\Test\ObjectBricks;
 use PHPUnit\Runner\Extension\Extension;
 use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
@@ -12,14 +14,16 @@ use PHPUnit\TextUI\Configuration\Configuration;
 use RuntimeException;
 use Symfony\Component\HttpKernel\KernelInterface;
 
-/**
- * Installing a class creates tables for it, and MySQL commits on any DDL, which would end the
- * transaction the tests are isolated by. It cannot happen inside a test, and not in a `beforeAll`
- * either: that runs while the previous class's transaction is still open.
- */
-final class InstallClassDefinitions implements Extension
+final class InstallDefinitions implements Extension
 {
-    private const string DEFAULT_DIRECTORY = 'tests/Fixtures/classes';
+    private const string DEFAULT_DIRECTORY = 'tests/Fixtures';
+
+    // A class definition names the fieldcollections and bricks it holds, so those come first.
+    private const array DEFINITIONS = [
+        'fieldcollections' => [Fieldcollections::class, 'install'],
+        'objectbricks' => [ObjectBricks::class, 'install'],
+        'classes' => [ClassDefinitions::class, 'install'],
+    ];
 
     public function bootstrap(
         Configuration $configuration,
@@ -30,16 +34,22 @@ final class InstallClassDefinitions implements Extension
             ? $parameters->get('directory')
             : self::DEFAULT_DIRECTORY;
 
-        $definitions = glob($directory . '/*.json') ?: [];
+        $found = [];
 
-        if ($definitions === []) {
+        foreach (self::DEFINITIONS as $kind => $installer) {
+            $found[$kind] = glob(sprintf('%s/%s/*.json', $directory, $kind)) ?: [];
+        }
+
+        if ($found === array_fill_keys(array_keys(self::DEFINITIONS), [])) {
             return;
         }
 
         $kernel = self::boot();
 
-        foreach ($definitions as $definition) {
-            ClassDefinitions::install(basename($definition, '.json'), $definition);
+        foreach (self::DEFINITIONS as $kind => $installer) {
+            foreach ($found[$kind] as $definition) {
+                $installer(basename($definition, '.json'), $definition);
+            }
         }
 
         $kernel->shutdown();
