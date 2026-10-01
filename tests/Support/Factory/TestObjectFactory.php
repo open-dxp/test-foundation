@@ -2,15 +2,12 @@
 
 declare(strict_types=1);
 
-namespace OpenDxp\TestFoundation\Tests\Fixtures;
+namespace OpenDxp\TestFoundation\Tests\Support\Factory;
 
 use OpenDxp\Model\DataObject\TestObject;
 use OpenDxp\TestFoundation\Factory\AbstractDataObjectFactory;
 
 /**
- * What a bundle writes for a class it defines itself. The class does not exist until the
- * definition beside this file has been installed.
- *
  * @extends AbstractDataObjectFactory<TestObject>
  */
 final class TestObjectFactory extends AbstractDataObjectFactory

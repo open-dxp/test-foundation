@@ -6,7 +6,7 @@
          cacheDirectory=".phpunit.cache">
     <testsuites>
         <testsuite name="open-dxp/test-foundation">
-            <directory>tests</directory>
+            <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
     <extensions>
@@ -14,6 +14,6 @@
         <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallClassDefinitions"/>
     </extensions>
     <php>
-        <env name="KERNEL_CLASS" value="OpenDxp\TestFoundation\Tests\TestKernel"/>
+        <env name="KERNEL_CLASS" value="OpenDxp\TestFoundation\Tests\Application\TestKernel"/>
     </php>
 </phpunit>

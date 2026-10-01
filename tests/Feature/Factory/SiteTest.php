@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OpenDxp\TestFoundation\Tests\Factory;
+namespace OpenDxp\TestFoundation\Tests\Feature\Factory;
 
 use OpenDxp\Model\Document\Page;
 use OpenDxp\Model\Site;
@@ -19,8 +19,8 @@ it('brings a root document named after its domain', function () {
 });
 
 it('serves from a root document the caller built', function () {
-    $root = PageFactory::new()->inLocale('de')->create(['key' => 'de-root']);
-    $site = SiteFactory::new()->rootedAt($root)->create(['mainDomain' => 'test-domain2.test']);
+    $root = PageFactory::new()->withLocale('de')->create(['key' => 'de-root']);
+    $site = SiteFactory::new()->withRoot($root)->create(['mainDomain' => 'test-domain2.test']);
 
     expect($site->getRootId())->toBe($root->getId())
         ->and($site->getRootDocument()->getProperty('language'))->toBe('de');
@@ -28,8 +28,8 @@ it('serves from a root document the caller built', function () {
 
 it('carries the settings and the further domains a test gives it', function () {
     $site = SiteFactory::new()
-        ->settings(['i18n' => ['zone' => 'zone1']])
-        ->alsoAt(['www.test-domain3.test'])
+        ->withSettings(['i18n' => ['zone' => 'zone1']])
+        ->withDomains(['www.test-domain3.test'])
         ->create(['mainDomain' => 'test-domain3.test']);
 
     expect($site->getCustomSettings())->toBe(['i18n' => ['zone' => 'zone1']])

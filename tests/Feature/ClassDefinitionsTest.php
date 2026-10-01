@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace OpenDxp\TestFoundation\Tests;
+namespace OpenDxp\TestFoundation\Tests\Feature;
 
 use OpenDxp\Model\DataObject\ClassDefinition;
 use OpenDxp\Model\DataObject\TestObject;
 use OpenDxp\TestFoundation\Factory\ObjectFolderFactory;
-use OpenDxp\TestFoundation\Tests\Fixtures\TestObjectFactory;
+use OpenDxp\TestFoundation\Tests\Support\Factory\TestObjectFactory;
 
 it('has installed the class the definition beside the tests describes', function () {
     expect(ClassDefinition::getByName('TestObject'))->toBeInstanceOf(ClassDefinition::class)
@@ -25,7 +25,7 @@ it('creates objects of the installed class', function () {
 
 it('puts an object into a folder', function () {
     $folder = ObjectFolderFactory::createOne(['key' => 'catalogue']);
-    $object = TestObjectFactory::new()->childOf($folder)->create(['key' => 'second-object']);
+    $object = TestObjectFactory::new()->withParent($folder)->create(['key' => 'second-object']);
 
     expect($object->getFullPath())->toBe('/catalogue/second-object');
 });

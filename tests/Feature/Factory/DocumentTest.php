@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OpenDxp\TestFoundation\Tests\Factory;
+namespace OpenDxp\TestFoundation\Tests\Feature\Factory;
 
 use OpenDxp\TestFoundation\Controller\DefaultController;
 use OpenDxp\Model\Document;
@@ -41,14 +41,14 @@ it('hands back a document that was never written', function () {
 
 it('puts a document below another one', function () {
     $parent = PageFactory::createOne(['key' => 'en']);
-    $child = PageFactory::new()->childOf($parent)->create(['key' => 'about-us']);
+    $child = PageFactory::new()->withParent($parent)->create(['key' => 'about-us']);
 
     expect($child->getParentId())->toBe($parent->getId())
         ->and($child->getFullPath())->toBe('/en/about-us');
 });
 
 it('marks the language a document belongs to', function () {
-    $page = PageFactory::new()->inLocale('de_CH')->create();
+    $page = PageFactory::new()->withLocale('de_CH')->create();
 
     expect($page->getProperty('language'))->toBe('de_CH');
 });
@@ -59,7 +59,7 @@ it('leaves a document unpublished when asked to', function () {
 });
 
 it('leaves the controller to the application unless a test names one', function () {
-    $named = PageFactory::new()->controller(DefaultController::class, 'javascriptAction')->create();
+    $named = PageFactory::new()->withController(DefaultController::class, 'javascriptAction')->create();
 
     expect($named->getController())->toBe(DefaultController::class . '::javascriptAction')
         ->and(PageFactory::createOne()->getController())
@@ -72,7 +72,7 @@ it('writes a snippet', function () {
 
 it('points a link at another document', function () {
     $target = PageFactory::createOne();
-    $link = LinkFactory::new()->to($target)->create();
+    $link = LinkFactory::new()->withTarget($target)->create();
 
     expect($link)->toBeInstanceOf(Link::class)
         ->and($link->getInternal())->toBe($target->getId())
@@ -81,7 +81,7 @@ it('points a link at another document', function () {
 
 it('mirrors a document with a hardlink', function () {
     $source = PageFactory::createOne();
-    $hardlink = HardlinkFactory::new()->to($source)->inLocale('de')->create();
+    $hardlink = HardlinkFactory::new()->withSource($source)->withLocale('de')->create();
 
     expect($hardlink)->toBeInstanceOf(Hardlink::class)
         ->and($hardlink->getSourceId())->toBe($source->getId())
@@ -90,8 +90,8 @@ it('mirrors a document with a hardlink', function () {
 });
 
 it('links a document as the language variant of another', function () {
-    $en = PageFactory::new()->inLocale('en')->create(['key' => 'en']);
-    $de = PageFactory::new()->inLocale('de')->translationOf($en)->create(['key' => 'de']);
+    $en = PageFactory::new()->withLocale('en')->create(['key' => 'en']);
+    $de = PageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de']);
 
     $variants = (new Document\Service())->getTranslations($en);
 
@@ -100,9 +100,9 @@ it('links a document as the language variant of another', function () {
 });
 
 it('joins a third document to the same set of variants', function () {
-    $en = PageFactory::new()->inLocale('en')->create(['key' => 'en-root']);
-    $de = PageFactory::new()->inLocale('de')->translationOf($en)->create(['key' => 'de-root']);
-    $fr = PageFactory::new()->inLocale('fr')->translationOf($de)->create(['key' => 'fr-root']);
+    $en = PageFactory::new()->withLocale('en')->create(['key' => 'en-root']);
+    $de = PageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de-root']);
+    $fr = PageFactory::new()->withLocale('fr')->withTranslationOf($de)->create(['key' => 'fr-root']);
 
     // Linking to any document of a set joins that set, and once there is one the source counts
     // as one of its own variants.

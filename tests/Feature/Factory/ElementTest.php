@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OpenDxp\TestFoundation\Tests\Factory;
+namespace OpenDxp\TestFoundation\Tests\Feature\Factory;
 
 use OpenDxp\TestFoundation\Controller\DefaultController;
 use OpenDxp\Bundle\StaticRoutesBundle\Model\Staticroute;
@@ -26,7 +26,7 @@ it('writes an image asset with a file behind it', function () {
 
 it('puts an asset into a folder', function () {
     $folder = AssetFolderFactory::createOne(['filename' => 'photos']);
-    $image = ImageAssetFactory::new()->childOf($folder)->create();
+    $image = ImageAssetFactory::new()->withParent($folder)->create();
 
     expect($folder)->toBeInstanceOf(AssetFolder::class)
         ->and($image->getParentId())->toBe($folder->getId())
@@ -51,8 +51,8 @@ it('writes a user that can sign in', function () {
 
 it('writes a static route', function () {
     $route = StaticRouteFactory::new()
-        ->at('/news/%text', '/news/%text')
-        ->controller(DefaultController::class, 'defaultAction')
+        ->withPattern('/news/%text', '/news/%text')
+        ->withController(DefaultController::class, 'defaultAction')
         ->create(['name' => 'news_detail']);
 
     expect($route)->toBeInstanceOf(Staticroute::class)

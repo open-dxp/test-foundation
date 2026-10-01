@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OpenDxp\TestFoundation\Tests;
+namespace OpenDxp\TestFoundation\Tests\Application;
 
 use OpenDxp\Bundle\StaticRoutesBundle\OpenDxpStaticRoutesBundle;
 use OpenDxp\HttpKernel\BundleCollection\BundleCollection;

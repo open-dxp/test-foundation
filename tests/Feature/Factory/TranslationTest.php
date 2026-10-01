@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace OpenDxp\TestFoundation\Tests\Factory;
+namespace OpenDxp\TestFoundation\Tests\Feature\Factory;
 
 use OpenDxp\Model\Translation;
 use OpenDxp\TestFoundation\Factory\TranslationFactory;
 
 it('writes a translated key', function () {
     $translation = TranslationFactory::new()
-        ->saying(['en' => 'Read more', 'de' => 'Mehr erfahren'])
+        ->withTranslations(['en' => 'Read more', 'de' => 'Mehr erfahren'])
         ->create(['key' => 'teaser.more']);
 
     expect($translation)->toBeInstanceOf(Translation::class)
