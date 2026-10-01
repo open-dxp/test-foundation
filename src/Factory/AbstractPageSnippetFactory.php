@@ -35,4 +35,9 @@ abstract class AbstractPageSnippetFactory extends AbstractDocumentFactory
             'missingRequiredEditable' => false,
         ];
     }
+
+    protected function initialize(): static
+    {
+        return parent::initialize()->inNavigation();
+    }
 }

@@ -36,4 +36,9 @@ final class LinkFactory extends AbstractDocumentFactory
             'internalType' => 'document',
         ];
     }
+
+    protected function initialize(): static
+    {
+        return parent::initialize()->inNavigation();
+    }
 }

@@ -37,6 +37,21 @@ abstract class AbstractDocumentFactory extends AbstractElementFactory
         );
     }
 
+    /**
+     * Without a navigation name OpenDXP leaves a document out of every menu.
+     */
+    public function inNavigation(?string $name = null): static
+    {
+        return $this->afterInstantiate(
+            static function (Document $document) use ($name): void {
+                $title = $name ?? $document->getKey();
+
+                $document->setProperty('navigation_title', 'text', $title);
+                $document->setProperty('navigation_name', 'text', $title);
+            },
+        );
+    }
+
     public function unpublished(): static
     {
         return $this->with(['published' => false]);
