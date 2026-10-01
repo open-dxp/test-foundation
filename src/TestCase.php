@@ -23,9 +23,6 @@ abstract class TestCase extends KernelTestCase
         return $request;
     }
 
-    /**
-     * A test about what the cache does turns this off, because nothing caches in debug mode.
-     */
     protected static function debug(): bool
     {
         return true;

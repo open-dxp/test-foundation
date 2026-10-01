@@ -8,10 +8,6 @@ use RuntimeException;
 
 final class Files
 {
-    /**
-     * A sparse file, so a large one costs no disk and no time. The same name hands back the same
-     * file rather than writing it again.
-     */
     public static function create(string $name, int $megabytes = 1): string
     {
         $path = self::directory() . '/' . $name;

@@ -17,6 +17,5 @@ it('makes a file of the size a test asks for', function () {
 });
 
 it('hands the same file back rather than writing it again', function () {
-
     expect(Files::create('twice.bin'))->toBe(Files::create('twice.bin'));
 });

@@ -28,7 +28,6 @@ final readonly class MakeServicesPublic implements CompilerPassInterface
             try {
                 $container->findDefinition($serviceId)->setPublic(true);
             } catch (ServiceNotFoundException) {
-                // An alias may point outside the container, and getServiceIds lists it anyway.
                 continue;
             }
         }
