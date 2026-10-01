@@ -6,9 +6,6 @@ namespace OpenDxp\TestFoundation;
 
 use Symfony\Component\HttpKernel\KernelInterface;
 
-/**
- * A test case that boots the application in one named state.
- */
 abstract class StateTestCase extends TestCase
 {
     abstract protected static function state(): string;

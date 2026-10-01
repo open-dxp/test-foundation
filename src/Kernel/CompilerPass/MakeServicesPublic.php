@@ -10,9 +10,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 final readonly class MakeServicesPublic implements CompilerPassInterface
 {
-    /**
-     * @param string $namespace
-     */
     public function __construct(private string $namespace)
     {
     }

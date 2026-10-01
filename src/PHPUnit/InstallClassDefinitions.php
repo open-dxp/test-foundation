@@ -13,23 +13,9 @@ use RuntimeException;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
- * Installs the data object classes a package keeps beside its tests, once, before the run.
- *
  * Installing a class creates tables for it, and MySQL commits on any DDL, which would end the
- * transaction the tests are isolated by. So it cannot happen inside a test, and not in a
- * `beforeAll` either: that runs while the previous class's transaction is still open. Before the
- * runner has started anything is the only moment where no transaction is in the way.
- *
- * A package that defines data object classes asks for this beside the one it already has:
- *
- *     <extensions>
- *         <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
- *         <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallClassDefinitions">
- *             <parameter name="directory" value="tests/Fixtures/classes"/>
- *         </bootstrap>
- *     </extensions>
- *
- * Every `*.json` in that directory becomes a class named after the file.
+ * transaction the tests are isolated by. It cannot happen inside a test, and not in a `beforeAll`
+ * either: that runs while the previous class's transaction is still open.
  */
 final class InstallClassDefinitions implements Extension
 {
@@ -59,10 +45,6 @@ final class InstallClassDefinitions implements Extension
         $kernel->shutdown();
     }
 
-    /**
-     * The application, built the way the test cases build it. Nothing has booted one yet at this
-     * point in the run, and installing a class needs the database behind it.
-     */
     private static function boot(): KernelInterface
     {
         $class = $_ENV['KERNEL_CLASS'] ?? $_SERVER['KERNEL_CLASS'] ?? getenv('KERNEL_CLASS');

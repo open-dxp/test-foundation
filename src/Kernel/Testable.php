@@ -19,15 +19,11 @@ use DAMA\DoctrineTestBundle\DAMADoctrineTestBundle;
 use Playwright\Symfony\PlaywrightSymfonyBundle;
 use Zenstruck\Foundry\ZenstruckFoundryBundle;
 
-/**
- * Turns a kernel into one that tests can run against.
- */
 trait Testable
 {
     /**
-     * Bundles that keep configuration of their own in files, and the file that points them at the
-     * settings store instead. An application decides whether it has these, and configuring one
-     * that is absent stops the container from building, so each is loaded only when it is there.
+     * Configuring a bundle that is absent stops the container from building, so each of these is
+     * loaded only when its bundle is registered.
      */
     private const array CONFIGURED_WHEN_PRESENT = [
         OpenDxpStaticRoutesBundle::class => 'static-routes.yaml',
@@ -35,11 +31,8 @@ trait Testable
     ];
 
     /**
-     * The class whose namespace marks the code under test.
-     *
-     * Every service below that namespace is made public, so a test can ask the container for one
-     * by name. A bundle names its bundle class, a project its kernel. Naming a class rather than
-     * writing the namespace out means a rename carries the test setup with it.
+     * Every service below this class's namespace is made public, so a test can ask the container
+     * for one by name. A bundle names its bundle class, a project its kernel.
      *
      * @return class-string
      */
@@ -85,8 +78,7 @@ trait Testable
 
     public function boot(): void
     {
-        // A test constructs its kernel itself, so nothing has told OpenDXP about it yet.
-        // Without this its shutdown handler reaches into a kernel that is not there.
+        // A test constructs its kernel itself, and OpenDXP's shutdown handler needs to know it.
         OpenDxp::setKernel($this);
 
         parent::boot();
