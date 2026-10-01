@@ -7,6 +7,7 @@ namespace OpenDxp\TestFoundation;
 use OpenDxp\Model\User;
 use OpenDxp\Security\User\User as SecurityUser;
 use Closure;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser as Client;
 use Zenstruck\Browser\KernelBrowser;
 use Zenstruck\Browser\PlaywrightBrowser;
 
@@ -16,17 +17,19 @@ final class Browser
 
     private static ?Closure $playwright = null;
 
+    private static ?Client $client = null;
+
     public static function visit(string $uri): KernelBrowser
     {
         return self::start()->visit($uri);
     }
 
-    public static function as(User $user): KernelBrowser
+    public static function actingAs(User $user): KernelBrowser
     {
         return self::start()->actingAs(new SecurityUser($user), self::ADMIN_FIREWALL);
     }
 
-    public static function playwrightAs(User $user): PlaywrightBrowser
+    public static function playwrightActingAs(User $user): PlaywrightBrowser
     {
         return self::playwright()->actingAs(new SecurityUser($user), self::ADMIN_FIREWALL);
     }
@@ -34,14 +37,11 @@ final class Browser
     /**
      * @internal the browser test case hands its factory over when it starts
      */
-    public static function providedBy(Closure $factory): void
+    public static function setPlaywrightFactory(Closure $factory): void
     {
         self::$playwright = $factory;
     }
 
-    /**
-     * A real browser, for what only a browser can do: run the JavaScript of a page and act on it.
-     */
     public static function playwright(): PlaywrightBrowser
     {
         return (self::$playwright ?? throw new \LogicException(
@@ -49,12 +49,23 @@ final class Browser
         ))();
     }
 
+    /**
+     * @internal the test case gives every test a browser of its own
+     */
+    public static function reset(): void
+    {
+        self::$client = null;
+    }
+
     public static function start(): KernelBrowser
     {
-        // The test case leaves a request on the stack, and the kernel would keep that one as the
-        // main request instead of the one being sent.
+        // Otherwise the kernel keeps the test case's request as the main one.
         Container::requestStack()->pop();
 
-        return new KernelBrowser(Container::testClient());
+        // Symfony hands out a new client for every call, and only a client that has already sent
+        // something reboots the kernel between requests.
+        self::$client ??= Container::testClient();
+
+        return new KernelBrowser(self::$client);
     }
 }

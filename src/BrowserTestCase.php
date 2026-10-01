@@ -14,6 +14,6 @@ abstract class BrowserTestCase extends TestCase
     {
         parent::setUp();
 
-        Browser::providedBy(fn () => $this->playwrightBrowser());
+        Browser::setPlaywrightFactory(fn () => $this->playwrightBrowser());
     }
 }

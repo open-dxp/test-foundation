@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation;
 
+use Closure;
 use Psr\Container\ContainerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
 
-/**
- * Reaches a service of the running application.
- *
- * A Pest test body is a closure, so `self::getContainer()` inside it resolves at runtime but is
- * invisible to static analysis and to an editor. The test case hands the container over here when
- * it boots, which keeps every call in a test typed and navigable.
- */
 final class Container
 {
-    private static ?ContainerInterface $container = null;
+    /**
+     * @var Closure(): ContainerInterface|null
+     */
+    private static ?Closure $container = null;
 
     /**
+     * The container is asked for on every call rather than kept, because a request through the
+     * browser reboots the kernel and builds a new one.
+     *
      * @internal called by the test case once the kernel is up
+     *
+     * @param Closure(): ContainerInterface $container
      */
-    public static function of(ContainerInterface $container): void
+    public static function setFactory(Closure $container): void
     {
         self::$container = $container;
     }
@@ -67,9 +69,9 @@ final class Container
 
     private static function container(): ContainerInterface
     {
-        return self::$container ?? throw new \LogicException(
+        return (self::$container ?? throw new \LogicException(
             'No application is running. A test reaching for a service must extend a test case of '
             . 'this package, which hands the container over when it boots.'
-        );
+        ))();
     }
 }
