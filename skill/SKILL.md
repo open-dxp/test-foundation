@@ -197,14 +197,14 @@ Every object a test needs comes from a factory. The foundation ships them for wh
 has:
 
 ```
-PageFactory  SnippetFactory  LinkFactory  HardlinkFactory
-ImageAssetFactory  AssetFolderFactory  ObjectFolderFactory
+DocumentPageFactory  DocumentSnippetFactory  DocumentLinkFactory  DocumentHardlinkFactory
+AssetImageFactory  AssetFolderFactory  DataObjectFolderFactory
 SiteFactory  UserFactory  TranslationFactory  StaticRouteFactory
 ```
 
 ```php
-$page = PageFactory::createOne(['key' => 'about-us']);
-$pages = PageFactory::createMany(5);
+$page = DocumentPageFactory::createOne(['key' => 'about-us']);
+$pages = DocumentPageFactory::createMany(5);
 $admin = UserFactory::new()->admin()->create();
 ```
 
@@ -223,16 +223,16 @@ A document that names no controller falls back to the application's
 `opendxp.documents.default_controller`, so most tests say nothing about it.
 
 ```php
-$en = PageFactory::new()->withLocale('en')->create(['key' => 'en']);
-$about = PageFactory::new()->withParent($en)->withLocale('en')->create(['key' => 'about-us']);
-$de = PageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de']);
+$en = DocumentPageFactory::new()->withLocale('en')->create(['key' => 'en']);
+$about = DocumentPageFactory::new()->withParent($en)->withLocale('en')->create(['key' => 'about-us']);
+$de = DocumentPageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de']);
 ```
 
 A site brings a root document named after its domain, or takes the one you built:
 
 ```php
 $site = SiteFactory::createOne(['mainDomain' => 'example.test']);
-$home = PageFactory::new()->withParent($site->getRootDocument())->create(['key' => 'home']);
+$home = DocumentPageFactory::new()->withParent($site->getRootDocument())->create(['key' => 'home']);
 ```
 
 Every factory writes through the object's own `save()`, not through Doctrine, and it writes last,
@@ -246,7 +246,7 @@ Keep the definition beside the tests, and the foundation installs it before the 
 ```xml
 <extensions>
     <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
-    <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallClassDefinitions">
+    <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallDefinitions">
         <parameter name="directory" value="tests/Fixtures/classes"/>
     </bootstrap>
 </extensions>

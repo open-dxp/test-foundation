@@ -184,14 +184,14 @@ can resolve it. Use `Container`.
 Create every object a test needs with a factory:
 
 ```
-PageFactory  SnippetFactory  LinkFactory  HardlinkFactory
-ImageAssetFactory  AssetFolderFactory  ObjectFolderFactory
+DocumentPageFactory  DocumentSnippetFactory  DocumentLinkFactory  DocumentHardlinkFactory
+AssetImageFactory  AssetFolderFactory  DataObjectFolderFactory
 SiteFactory  UserFactory  TranslationFactory  StaticRouteFactory
 ```
 
 ```php
-$page = PageFactory::createOne(['key' => 'about-us']);
-$pages = PageFactory::createMany(5);
+$page = DocumentPageFactory::createOne(['key' => 'about-us']);
+$pages = DocumentPageFactory::createMany(5);
 $admin = UserFactory::new()->admin()->create();
 ```
 
@@ -213,24 +213,24 @@ Some factories have states of their own:
 
 |                                  |                                                                             |
 |----------------------------------|-----------------------------------------------------------------------------|
-| `LinkFactory`                    | `->withTarget($document)` the document it points at                                 |
-| `HardlinkFactory`                | `->withSource($document)` the document it mirrors                           |
+| `DocumentLinkFactory`                    | `->withTarget($document)` the document it points at                                 |
+| `DocumentHardlinkFactory`                | `->withSource($document)` the document it mirrors                           |
 | `SiteFactory`                    | `->withRoot($page)`, `->withDomains(['www.example.test'])`, `->withSettings([...])`  |
 | `UserFactory`                    | `->admin()`                                                                 |
 | `TranslationFactory`             | `->withTranslations(['en' => 'Read more'])`, `->admin()`                           |
 | `StaticRouteFactory`             | `->withPattern($pattern, $reverse)`, `->withController(Controller::class, 'someAction')` |
 
 ```php
-$en = PageFactory::new()->withLocale('en')->create(['key' => 'en']);
-$about = PageFactory::new()->withParent($en)->withLocale('en')->create(['key' => 'about-us']);
-$de = PageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de']);
+$en = DocumentPageFactory::new()->withLocale('en')->create(['key' => 'en']);
+$about = DocumentPageFactory::new()->withParent($en)->withLocale('en')->create(['key' => 'about-us']);
+$de = DocumentPageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de']);
 ```
 
 A site creates a root document named after its domain. You can also pass your own:
 
 ```php
 $site = SiteFactory::createOne(['mainDomain' => 'example.test']);
-$home = PageFactory::new()->withParent($site->getRootDocument())->create(['key' => 'home']);
+$home = DocumentPageFactory::new()->withParent($site->getRootDocument())->create(['key' => 'home']);
 ```
 
 A factory saves an object with the object's own `save()` method, not through Doctrine. It saves as
@@ -244,7 +244,7 @@ for it. Put the definition next to your tests and it is installed before the tes
 ```xml
 <extensions>
     <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
-    <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallClassDefinitions">
+    <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallDefinitions">
         <parameter name="directory" value="tests/Fixtures/classes"/>
     </bootstrap>
 </extensions>
