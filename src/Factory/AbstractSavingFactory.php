@@ -8,8 +8,6 @@ use OpenDxp\Model\AbstractModel;
 use Zenstruck\Foundry\ObjectFactory;
 
 /**
- * A factory whose object writes itself once it has been built.
- *
  * @template T of AbstractModel
  *
  * @extends ObjectFactory<T>
@@ -17,16 +15,13 @@ use Zenstruck\Foundry\ObjectFactory;
 abstract class AbstractSavingFactory extends ObjectFactory
 {
     /**
-     * Foundry runs the hooks from the highest priority down, so writing last is what leaves a
-     * state room to still change the object.
+     * Foundry runs the hooks from the highest priority down, so writing last lets a state still
+     * change the object.
      */
     private const int WRITE = -1000;
 
     private bool $writes = true;
 
-    /**
-     * An object that is built and handed over, but never written.
-     */
     public function unsaved(): static
     {
         $clone = clone $this;

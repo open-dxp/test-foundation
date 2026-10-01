@@ -9,6 +9,10 @@ use OpenDxp\Model\Document\Hardlink;
 
 /**
  * @extends AbstractDocumentFactory<Hardlink>
+ *
+ * @method Hardlink create(array|callable $attributes = [])
+ * @method static Hardlink createOne(array $attributes = [])
+ * @method static list<Hardlink> createMany(int $number, array $attributes = [])
  */
 final class HardlinkFactory extends AbstractDocumentFactory
 {
@@ -17,10 +21,7 @@ final class HardlinkFactory extends AbstractDocumentFactory
         return Hardlink::class;
     }
 
-    /**
-     * The document a hardlink mirrors.
-     */
-    public function to(Document $source): static
+    public function withSource(Document $source): static
     {
         return $this->with([
             'sourceId'             => $source->getId(),

@@ -8,6 +8,10 @@ use OpenDxp\Model\Document\Page;
 
 /**
  * @extends AbstractPageSnippetFactory<Page>
+ *
+ * @method Page create(array|callable $attributes = [])
+ * @method static Page createOne(array $attributes = [])
+ * @method static list<Page> createMany(int $number, array $attributes = [])
  */
 final class PageFactory extends AbstractPageSnippetFactory
 {

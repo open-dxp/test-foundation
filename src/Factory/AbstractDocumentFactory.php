@@ -18,17 +18,7 @@ abstract class AbstractDocumentFactory extends AbstractElementFactory
      */
     private const int LINK = -2000;
 
-    /**
-     * Makes this document the language variant of another one.
-     *
-     * OpenDXP keeps the variants of a document in a table of their own, always pointing at one
-     * source, so linking a third document to either of two already linked ones joins the same
-     * set. The language is the one the document carries, which `inLocale()` puts there.
-     *
-     * The method lives on the service's Dao and is reached through a magic call, so it is wrapped
-     * here rather than written out in every test.
-     */
-    public function translationOf(Document $source, ?string $locale = null): static
+    public function withTranslationOf(Document $source, ?string $locale = null): static
     {
         return $this->afterInstantiate(
             static fn (Document $document) => (new Document\Service())
@@ -40,7 +30,7 @@ abstract class AbstractDocumentFactory extends AbstractElementFactory
     /**
      * Without a navigation name OpenDXP leaves a document out of every menu.
      */
-    public function inNavigation(?string $name = null): static
+    public function withNavigationName(?string $name = null): static
     {
         return $this->afterInstantiate(
             static function (Document $document) use ($name): void {
@@ -58,10 +48,10 @@ abstract class AbstractDocumentFactory extends AbstractElementFactory
     }
 
     /**
-     * The language a document belongs to. OpenDXP keeps it in an inheritable property rather
-     * than a field, which is why this is a hook and not an attribute.
+     * OpenDXP keeps the language in an inheritable property rather than a field, which is why
+     * this is a hook and not an attribute.
      */
-    public function inLocale(string $locale): static
+    public function withLocale(string $locale): static
     {
         return $this->afterInstantiate(
             static fn (Document $document) => $document->setProperty('language', 'text', $locale, false, true),

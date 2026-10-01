@@ -7,15 +7,13 @@ namespace OpenDxp\TestFoundation\Factory;
 use OpenDxp\Model\Element\ElementInterface;
 
 /**
- * What every document, asset and object in OpenDXP has in common: a place in a tree and an owner.
- *
  * @template T of ElementInterface
  *
  * @extends AbstractSavingFactory<T>
  */
 abstract class AbstractElementFactory extends AbstractSavingFactory
 {
-    public function childOf(ElementInterface $parent): static
+    public function withParent(ElementInterface $parent): static
     {
         return $this->with(['parentId' => $parent->getId()]);
     }

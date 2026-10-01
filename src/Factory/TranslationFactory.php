@@ -8,6 +8,10 @@ use OpenDxp\Model\Translation;
 
 /**
  * @extends AbstractSavingFactory<Translation>
+ *
+ * @method Translation create(array|callable $attributes = [])
+ * @method static Translation createOne(array $attributes = [])
+ * @method static list<Translation> createMany(int $number, array $attributes = [])
  */
 final class TranslationFactory extends AbstractSavingFactory
 {
@@ -19,12 +23,12 @@ final class TranslationFactory extends AbstractSavingFactory
     /**
      * @param array<string, string> $translations one per language
      */
-    public function saying(array $translations): static
+    public function withTranslations(array $translations): static
     {
         return $this->with(['translations' => $translations]);
     }
 
-    public function forAdmin(): static
+    public function admin(): static
     {
         return $this->with(['domain' => Translation::DOMAIN_ADMIN]);
     }

@@ -9,13 +9,10 @@ use RuntimeException;
 final class Files
 {
     /**
-     * A file of a given size, and the path to it.
-     *
-     * The bytes are nothing in particular: this is for tests about what an application does with
-     * a file of that size, not about what is in it. It is a sparse file, so twenty five megabytes
-     * cost no disk and no time. Handing the same name back twice hands back the same file.
+     * A sparse file, so a large one costs no disk and no time. The same name hands back the same
+     * file rather than writing it again.
      */
-    public static function sized(string $name, int $megabytes = 1): string
+    public static function create(string $name, int $megabytes = 1): string
     {
         $path = self::directory() . '/' . $name;
 

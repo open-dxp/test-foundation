@@ -8,6 +8,10 @@ use OpenDxp\Bundle\StaticRoutesBundle\Model\Staticroute;
 
 /**
  * @extends AbstractSavingFactory<Staticroute>
+ *
+ * @method Staticroute create(array|callable $attributes = [])
+ * @method static Staticroute createOne(array $attributes = [])
+ * @method static list<Staticroute> createMany(int $number, array $attributes = [])
  */
 final class StaticRouteFactory extends AbstractSavingFactory
 {
@@ -19,12 +23,12 @@ final class StaticRouteFactory extends AbstractSavingFactory
     /**
      * @param class-string $controller
      */
-    public function controller(string $controller, string $action): static
+    public function withController(string $controller, string $action): static
     {
         return $this->with(['controller' => sprintf('%s::%s', $controller, $action)]);
     }
 
-    public function at(string $pattern, string $reverse): static
+    public function withPattern(string $pattern, string $reverse): static
     {
         return $this->with(['pattern' => $pattern, 'reverse' => $reverse]);
     }

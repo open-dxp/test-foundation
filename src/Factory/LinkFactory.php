@@ -9,6 +9,10 @@ use OpenDxp\Model\Document\Link;
 
 /**
  * @extends AbstractDocumentFactory<Link>
+ *
+ * @method Link create(array|callable $attributes = [])
+ * @method static Link createOne(array $attributes = [])
+ * @method static list<Link> createMany(int $number, array $attributes = [])
  */
 final class LinkFactory extends AbstractDocumentFactory
 {
@@ -17,11 +21,7 @@ final class LinkFactory extends AbstractDocumentFactory
         return Link::class;
     }
 
-    /**
-     * A link has no meaning without something it points at,
-     * so this is the one state a caller always sets.
-     */
-    public function to(Document $target): static
+    public function withTarget(Document $target): static
     {
         return $this->with(['internal' => $target->getId()]);
     }
@@ -39,6 +39,6 @@ final class LinkFactory extends AbstractDocumentFactory
 
     protected function initialize(): static
     {
-        return parent::initialize()->inNavigation();
+        return parent::initialize()->withNavigationName();
     }
 }

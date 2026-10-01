@@ -8,6 +8,10 @@ use OpenDxp\Model\Asset\Folder;
 
 /**
  * @extends AbstractElementFactory<Folder>
+ *
+ * @method Folder create(array|callable $attributes = [])
+ * @method static Folder createOne(array $attributes = [])
+ * @method static list<Folder> createMany(int $number, array $attributes = [])
  */
 final class AssetFolderFactory extends AbstractElementFactory
 {

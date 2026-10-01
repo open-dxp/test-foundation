@@ -9,6 +9,10 @@ use OpenDxp\Tool\Authentication;
 
 /**
  * @extends AbstractSavingFactory<User>
+ *
+ * @method User create(array|callable $attributes = [])
+ * @method static User createOne(array $attributes = [])
+ * @method static list<User> createMany(int $number, array $attributes = [])
  */
 final class UserFactory extends AbstractSavingFactory
 {

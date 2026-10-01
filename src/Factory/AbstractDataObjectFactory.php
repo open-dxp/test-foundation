@@ -7,19 +7,8 @@ namespace OpenDxp\TestFoundation\Factory;
 use OpenDxp\Model\DataObject\Concrete;
 
 /**
- * The base for a factory over one of your own data object classes.
- *
- * There is no DataObjectFactory here, and there cannot be one: the PHP class behind a data object
- * is generated from a class definition, so it only exists once the bundle or project that defines
- * it has installed it. Whoever owns the definition owns the factory:
- *
- *     final class ProductFactory extends AbstractDataObjectFactory
- *     {
- *         public static function class(): string
- *         {
- *             return Product::class;
- *         }
- *     }
+ * There is no DataObjectFactory, because the PHP class behind a data object is generated from a
+ * class definition and exists only once the package that defines it has installed it.
  *
  * @template T of Concrete
  *

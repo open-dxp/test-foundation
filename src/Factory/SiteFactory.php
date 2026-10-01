@@ -9,6 +9,10 @@ use OpenDxp\Model\Site;
 
 /**
  * @extends AbstractSavingFactory<Site>
+ *
+ * @method Site create(array|callable $attributes = [])
+ * @method static Site createOne(array $attributes = [])
+ * @method static list<Site> createMany(int $number, array $attributes = [])
  */
 final class SiteFactory extends AbstractSavingFactory
 {
@@ -17,25 +21,37 @@ final class SiteFactory extends AbstractSavingFactory
         return Site::class;
     }
 
-    public function rootedAt(Document $root): static
+    public function withRoot(Document $root): static
     {
         return $this->with(['rootId' => $root->getId()]);
     }
 
     /**
-     * The domains that reach this site besides its main one.
-     *
-     * @param list<string> $domains
+     * @param list<string> $domains the domains besides the main one
      */
-    public function alsoAt(array $domains): static
+    public function withDomains(array $domains): static
     {
         return $this->with(['domains' => $domains]);
     }
 
     /**
+     * @param array<string, string> $localized one path per locale
+     */
+    public function withErrorDocuments(array $localized, ?string $default = null): static
+    {
+        $attributes = ['localizedErrorDocuments' => $localized];
+
+        if ($default !== null) {
+            $attributes['errorDocument'] = $default;
+        }
+
+        return $this->with($attributes);
+    }
+
+    /**
      * @param array<string, mixed> $settings
      */
-    public function settings(array $settings): static
+    public function withSettings(array $settings): static
     {
         return $this->with(['customSettings' => $settings]);
     }

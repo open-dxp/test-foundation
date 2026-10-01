@@ -8,6 +8,10 @@ use OpenDxp\Model\Asset\Image;
 
 /**
  * @extends AbstractElementFactory<Image>
+ *
+ * @method Image create(array|callable $attributes = [])
+ * @method static Image createOne(array $attributes = [])
+ * @method static list<Image> createMany(int $number, array $attributes = [])
  */
 final class ImageAssetFactory extends AbstractElementFactory
 {
@@ -16,9 +20,6 @@ final class ImageAssetFactory extends AbstractElementFactory
         return Image::class;
     }
 
-    /**
-     * The picture every image starts out as, unless a test hands over its own bytes.
-     */
     public static function fixture(): string
     {
         return dirname(__DIR__, 2) . '/fixtures/image.jpg';
