@@ -42,27 +42,72 @@ A namespace mapped onto `tests/`, and the foundation under `require-dev`:
 
 A `tests/TestKernel.php` and a `tests/Pest.php`.
 
-## Where a test lives
+## Directory structure
 
-A test file is named after the **subject** it covers, never after the kind of test it is.
+The `tests` directory contains only tests. Everything the tests need is in a separate directory
+next to them.
 
 ```
 tests/
-  Pest.php            which test case applies where
-  TestKernel.php      which bundles boot
-  config/             configuration per state, see below
-  Area/
-    HeadlineTest.php  everything about headlines, fast checks and browser checks alike
-    AccordionTest.php
+    Pest.php            assigns the test cases
+    Feature/            all tests
+        Area/
+            HeadlineTest.php
+    Unit/               tests that do not need the application
+    Application/        the application under test
+        TestKernel.php
+        config/         one file per state
+        templates/
+        Controller/
+        Service/
+    Support/            code the tests use
+        TestCase/
+        Factory/
+        Story/
+    Fixtures/           data files such as class definitions and images
 ```
 
-There are no `Unit/`, `Functional/` or `Acceptance/` directories. Whether a check needs a kernel
-or a browser is a property of that check, not a filing decision.
+`Feature` contains every test that boots the application. Browser tests belong there too. A browser
+test is a feature test that uses a real browser, and it is marked with the `browser` group rather
+than by its directory.
+
+`Unit` contains tests that do not boot the application. Add the directory when a package has such a
+test.
+
+Name a test file after the class or the behaviour it tests, not after the type of test. Use one
+directory per subject inside `Feature`.
+
+A project does not need an `Application` directory, because the project is the application. Its
+test kernel goes directly into `tests`:
+
+```
+tests/
+    Pest.php
+    TestKernel.php
+    Feature/
+        Application/
+            BootTest.php
+        Browser/
+            BackendTest.php
+```
 
 ```bash
 vendor/bin/pest
 vendor/bin/pest --exclude-group=browser   # without the slow ones
 ```
+
+## Naming
+
+A method says what it does, in the words the framework around it already uses.
+
+- A read is named after what it returns: `Container::environment()`, `Browser::playwright()`.
+- A write starts with `set`, as it does in Symfony and in OpenDXP: `Container::setFactory()`,
+  `Site::setCurrentSite()`.
+- An action is a verb: `ClassDefinitions::install()`, `Files::create()`, `Browser::visit()`.
+- When a library this foundation builds on already has a name for something, use that name.
+  `Browser::actingAs()` is called that because zenstruck/browser calls it that.
+
+Do not name a method `of()` or `from()` unless it constructs the thing it is named after.
 
 ## The kernel
 
@@ -135,7 +180,7 @@ final class ThemeTestCase extends StateTestCase
 That is how a package tests two configurations of itself, one directory per state. It replaces
 booting a different configuration in the middle of a test.
 
-## Reaching the application
+## Accessing services
 
 ```php
 Container::get(AreaManager::class);   // typed, navigable
@@ -167,27 +212,27 @@ States say what kind of thing it is, attributes say what is in it:
 
 | | |
 |---|---|
-| `->childOf($parent)` | put it below another element |
-| `->inLocale('de_CH')` | the language the document belongs to |
+| `->withParent($parent)` | put it below another element |
+| `->withLocale('de_CH')` | the language the document belongs to |
 | `->unpublished()` | a document or object that is not live |
 | `->unsaved()` | built and handed over, never written |
-| `->translationOf($source)` | a language variant of another document |
-| `->controller(Controller::class, 'someAction')` | what renders this document |
+| `->withTranslationOf($source)` | a language variant of another document |
+| `->withController(Controller::class, 'someAction')` | what renders this document |
 
 A document that names no controller falls back to the application's
 `opendxp.documents.default_controller`, so most tests say nothing about it.
 
 ```php
-$en = PageFactory::new()->inLocale('en')->create(['key' => 'en']);
-$about = PageFactory::new()->childOf($en)->inLocale('en')->create(['key' => 'about-us']);
-$de = PageFactory::new()->inLocale('de')->translationOf($en)->create(['key' => 'de']);
+$en = PageFactory::new()->withLocale('en')->create(['key' => 'en']);
+$about = PageFactory::new()->withParent($en)->withLocale('en')->create(['key' => 'about-us']);
+$de = PageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de']);
 ```
 
 A site brings a root document named after its domain, or takes the one you built:
 
 ```php
 $site = SiteFactory::createOne(['mainDomain' => 'example.test']);
-$home = PageFactory::new()->childOf($site->getRootDocument())->create(['key' => 'home']);
+$home = PageFactory::new()->withParent($site->getRootDocument())->create(['key' => 'home']);
 ```
 
 Every factory writes through the object's own `save()`, not through Doctrine, and it writes last,
@@ -224,16 +269,16 @@ final class ProductFactory extends AbstractDataObjectFactory
 For the tests that are about a file rather than its contents:
 
 ```php
-$path = Files::sized('upload.pdf', megabytes: 25);
+$path = Files::create('upload.pdf', megabytes: 25);
 ```
 
 ## The browser
 
 ```php
 Browser::visit('/en/about-us')->assertSee('About us');
-Browser::as($user)->visit('/admin');
+Browser::actingAs($user)->visit('/admin');
 
-Browser::playwrightAs(UserFactory::new()->admin()->create())
+Browser::playwrightActingAs(UserFactory::new()->admin()->create())
     ->visit('/admin')
     ->waitUntilVisible('div#opendxp_panel_tree_objects');
 ```
@@ -242,7 +287,7 @@ Browser::playwrightAs(UserFactory::new()->admin()->create())
 `playwrightAs` and `playwright` drive a real browser. Mark those `->group('browser')` so they can
 be left out.
 
-## Where a dependency belongs
+## Choosing the composer key
 
 | The package needs it | Key |
 |---|---|

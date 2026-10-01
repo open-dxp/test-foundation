@@ -84,25 +84,65 @@ final class TestKernel extends \App\Kernel
 }
 ```
 
-## Where a test lives
+## Directory structure
 
-Name a test file after the thing it tests, not after the kind of test it is.
+The `tests` directory contains only tests. Everything the tests need is in a separate directory next to them.
 
 ```
 tests/
-  Pest.php            assigns the test cases
-  TestKernel.php      registers the bundles
-  config/             configuration per state
-  Area/
-    HeadlineTest.php  all tests for headlines, with or without a browser
+    Pest.php            assigns the test cases
+    Feature/            all tests
+        Area/
+            HeadlineTest.php
+    Unit/               tests that do not need the application
+    Application/        the application under test
+        TestKernel.php
+        config/         one file per state
+        templates/
+        Controller/
+        Service/
+    Support/            code the tests use
+        TestCase/
+        Factory/
+        Story/
+    Fixtures/           data files such as class definitions and images
 ```
+
+`Feature` contains every test that boots the application. Browser tests belong there too. A browser
+test is a feature test that uses a real browser, and it is marked with the `browser` group rather
+than by its directory.
+
+`Unit` contains tests that do not boot the application. Add the directory when a package has such a test.
+
+Name a test file after the class or the behaviour it tests, not after the type of test. Use one directory per subject inside `Feature`.
+
+A project does not need an `Application` directory, because the project is the application. 
+Its test kernel goes directly into `tests`:
+
+```
+tests/
+    Pest.php
+    TestKernel.php
+    Feature/
+        Application/
+            BootTest.php
+        Browser/
+            BackendTest.php
+```
+
+### Test cases
 
 `tests/Pest.php` assigns a test case to a directory:
 
 ```php
-pest()->extend(TestCase::class)->use(Factories::class)->in('Area', 'Document');
-pest()->extend(BrowserTestCase::class)->use(Factories::class)->in('Browser');
-pest()->extend(ThemeTestCase::class)->use(Factories::class)->in('Theme');
+pest()->extend(TestCase::class)->use(Factories::class)->in('Feature');
+pest()->extend(BrowserTestCase::class)->use(Factories::class)->in('Feature/Browser');
+```
+
+A test file that needs a different test case than its directory declares it:
+
+```php
+uses(ThemeTestCase::class);
 ```
 
 |                   |                                            |
@@ -111,8 +151,8 @@ pest()->extend(ThemeTestCase::class)->use(Factories::class)->in('Theme');
 | `BrowserTestCase` | the same, plus a real browser              |
 | `StateTestCase`   | the same, booted in a named state          |
 
-A state is a second configuration of the same application.
-Give it a name, and the kernel loads `tests/config/<state>.yaml` after all other configuration:
+A state is a second configuration of the same application. Give the state a name, and the kernel
+loads `<state>.yaml` from the `config` directory next to it:
 
 ```php
 final class ThemeTestCase extends StateTestCase
@@ -124,9 +164,11 @@ final class ThemeTestCase extends StateTestCase
 }
 ```
 
-Use this when your package has to work with two different configurations. One directory per state.
+The kernel reads the state configuration from its own directory. That is why `TestKernel.php` and
+`config` are both in `Application`. Use a state when the package has to work with more than one
+configuration.
 
-## Reaching the application
+## Accessing services
 
 ```php
 Container::get(AreaManager::class);
@@ -157,12 +199,12 @@ States describe what kind of object you want. Attributes set its values.
 
 |                                                 |                                        |
 |-------------------------------------------------|----------------------------------------|
-| `->childOf($parent)`                            | put it below another element           |
-| `->inLocale('de_CH')`                           | the language the document belongs to   |
+| `->withParent($parent)`                            | put it below another element           |
+| `->withLocale('de_CH')`                           | the language the document belongs to   |
 | `->unpublished()`                               | a document or object that is not live  |
 | `->unsaved()`                                   | build the object, but do not save it   |
-| `->translationOf($source)`                      | a language variant of another document |
-| `->controller(Controller::class, 'someAction')` | what renders this document             |
+| `->withTranslationOf($source)`                      | a language variant of another document |
+| `->withController(Controller::class, 'someAction')` | what renders this document             |
 
 A document without a controller uses the application's `opendxp.documents.default_controller`, so
 most tests do not set one.
@@ -171,23 +213,24 @@ Some factories have states of their own:
 
 |                                  |                                                                             |
 |----------------------------------|-----------------------------------------------------------------------------|
-| `LinkFactory`, `HardlinkFactory` | `->to($document)` the document it points at                                 |
-| `SiteFactory`                    | `->rootedAt($page)`, `->alsoAt(['www.example.test'])`, `->settings([...])`  |
+| `LinkFactory`                    | `->withTarget($document)` the document it points at                                 |
+| `HardlinkFactory`                | `->withSource($document)` the document it mirrors                           |
+| `SiteFactory`                    | `->withRoot($page)`, `->withDomains(['www.example.test'])`, `->withSettings([...])`  |
 | `UserFactory`                    | `->admin()`                                                                 |
-| `TranslationFactory`             | `->saying(['en' => 'Read more'])`, `->forAdmin()`                           |
-| `StaticRouteFactory`             | `->at($pattern, $reverse)`, `->controller(Controller::class, 'someAction')` |
+| `TranslationFactory`             | `->withTranslations(['en' => 'Read more'])`, `->admin()`                           |
+| `StaticRouteFactory`             | `->withPattern($pattern, $reverse)`, `->withController(Controller::class, 'someAction')` |
 
 ```php
-$en = PageFactory::new()->inLocale('en')->create(['key' => 'en']);
-$about = PageFactory::new()->childOf($en)->inLocale('en')->create(['key' => 'about-us']);
-$de = PageFactory::new()->inLocale('de')->translationOf($en)->create(['key' => 'de']);
+$en = PageFactory::new()->withLocale('en')->create(['key' => 'en']);
+$about = PageFactory::new()->withParent($en)->withLocale('en')->create(['key' => 'about-us']);
+$de = PageFactory::new()->withLocale('de')->withTranslationOf($en)->create(['key' => 'de']);
 ```
 
 A site creates a root document named after its domain. You can also pass your own:
 
 ```php
 $site = SiteFactory::createOne(['mainDomain' => 'example.test']);
-$home = PageFactory::new()->childOf($site->getRootDocument())->create(['key' => 'home']);
+$home = PageFactory::new()->withParent($site->getRootDocument())->create(['key' => 'home']);
 ```
 
 A factory saves an object with the object's own `save()` method, not through Doctrine. It saves as
@@ -229,16 +272,16 @@ final class ProductFactory extends AbstractDataObjectFactory
 For tests that care about the size of a file and not about its contents:
 
 ```php
-$path = Files::sized('upload.pdf', megabytes: 25);
+$path = Files::create('upload.pdf', megabytes: 25);
 ```
 
 ## The browser
 
 ```php
 Browser::visit('/en/about-us')->assertSee('About us');
-Browser::as($user)->visit('/admin');
+Browser::actingAs($user)->visit('/admin');
 
-Browser::playwrightAs(UserFactory::new()->admin()->create())
+Browser::playwrightActingAs(UserFactory::new()->admin()->create())
     ->visit('/admin')
     ->waitUntilVisible('div#opendxp_panel_tree_objects');
 ```
@@ -263,7 +306,7 @@ parameters:
         containerXmlPath: %currentWorkingDirectory%/var/cache/test/TestContainerDebug.xml
 ```
 
-## Where a dependency belongs
+## Choosing the composer key
 
 | The package needs it                                | Key                           |
 |-----------------------------------------------------|-------------------------------|
