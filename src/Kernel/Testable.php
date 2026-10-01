@@ -9,7 +9,6 @@ use OpenDxp\Bundle\CustomReportsBundle\OpenDxpCustomReportsBundle;
 use OpenDxp\Bundle\StaticRoutesBundle\OpenDxpStaticRoutesBundle;
 use OpenDxp\HttpKernel\BundleCollection\BundleCollection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\DisableCsrfProtection;
-use OpenDxp\TestFoundation\Kernel\CompilerPass\DoNotWriteBackTranslations;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\MakeServicesPublic;
 use ReflectionClass;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -31,9 +30,6 @@ trait Testable
     ];
 
     /**
-     * Every service below this class's namespace is made public, so a test can ask the container
-     * for one by name. A bundle names its bundle class, a project its kernel.
-     *
      * @return class-string
      */
     abstract protected function getServicesClass(): string;
@@ -78,7 +74,6 @@ trait Testable
 
     public function boot(): void
     {
-        // A test constructs its kernel itself, and OpenDXP's shutdown handler needs to know it.
         OpenDxp::setKernel($this);
 
         parent::boot();
@@ -87,7 +82,6 @@ trait Testable
     protected function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new DisableCsrfProtection());
-        $container->addCompilerPass(new DoNotWriteBackTranslations());
 
         $container->addCompilerPass(
             new MakeServicesPublic((new ReflectionClass($this->getServicesClass()))->getNamespaceName()),
