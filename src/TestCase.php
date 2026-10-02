@@ -42,6 +42,13 @@ abstract class TestCase extends KernelTestCase
 
         self::bootKernel();
 
+        // OpenDXP sets its configured timezone in Bootstrap::kernel(), which a test does not go through.
+        $timezone = Config::getSystemConfiguration()['general']['timezone'] ?? null;
+
+        if ($timezone) {
+            date_default_timezone_set($timezone);
+        }
+
         Container::setFactory(static fn () => self::getContainer());
         Browser::reset();
         Container::requestStack()->push(self::request());
