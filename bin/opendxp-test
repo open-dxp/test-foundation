@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use OpenDxp\TestFoundation\Command\AnalyseCommand;
+use OpenDxp\TestFoundation\Command\BundleCommand;
+use OpenDxp\TestFoundation\Command\InstallCommand;
+use Symfony\Component\Console\Application;
+
+require $_composer_autoload_path ?? getcwd() . '/vendor/autoload.php';
+
+$application = new Application('opendxp-test');
+$application->addCommands([new BundleCommand(), new InstallCommand(), new AnalyseCommand()]);
+$application->run();
