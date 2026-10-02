@@ -16,6 +16,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
 
 #[AsCommand(
     name: 'bundle',
@@ -93,7 +94,8 @@ final class BundleCommand extends Command
             $requirements[] = $package . ':*';
         }
 
-        if ($opendxpConstraint !== null) {
+        // Core as the bundle under test is the checkout itself and cannot be forced to another version.
+        if ($opendxpConstraint !== null && $bundleManifest['name'] !== 'open-dxp/opendxp') {
             $requirements[] = 'open-dxp/opendxp:' . $opendxpConstraint;
         }
 
@@ -112,7 +114,7 @@ final class BundleCommand extends Command
         // Composer asks the repositories in order, so the checkout wins over a registry with a release of the bundle.
         // A caller who already offers the checkout may have given it a version, and that repository stays.
         if (!$this->offersDirectory($repositories, $bundleDirectory)) {
-            array_unshift($repositories, ['type' => 'path', 'url' => $bundleDirectory]);
+            array_unshift($repositories, $this->checkoutRepository($bundleDirectory, $bundleManifest['name']));
         }
 
         $manifest['repositories'] = $repositories;
@@ -128,6 +130,25 @@ final class BundleCommand extends Command
             $applicationDirectory . '/composer.json',
             json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n",
         );
+    }
+
+    /**
+     * A checkout of a branch has no version that a constraint such as ^1.3 accepts. It reports the
+     * major version of its newest tag followed by .99.99 instead.
+     *
+     * @return array<string, mixed>
+     */
+    private function checkoutRepository(string $directory, string $package): array
+    {
+        $repository = ['type' => 'path', 'url' => $directory];
+        $newestTag = new Process(['git', '-C', $directory, 'describe', '--tags', '--abbrev=0']);
+        $newestTag->run();
+
+        if (preg_match('/(\d+)\./', $newestTag->getOutput(), $match)) {
+            $repository['options'] = ['versions' => [$package => $match[1] . '.99.99']];
+        }
+
+        return $repository;
     }
 
     /**
