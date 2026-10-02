@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OpenDxp\TestFoundation\PHPUnit;
 
 use OpenDxp\Test\ClassDefinitions;
+use OpenDxp\Test\ClassificationStores;
 use OpenDxp\Test\Fieldcollections;
 use OpenDxp\Test\ObjectBricks;
 use PHPUnit\Runner\Extension\Extension;
@@ -18,13 +19,12 @@ final class InstallDefinitions implements Extension
 {
     private const string DEFAULT_DIRECTORY = 'tests/Fixtures';
 
-    // A class names the fieldcollections it holds and drops one that is not there yet, while an
-    // objectbrick names the classes it belongs to and registers itself on them. So the collections
-    // come first, then the classes, then the bricks.
+    // A class names its stores and fieldcollections, and a brick registers itself on its classes, so the order matters.
     private const array DEFINITIONS = [
-        'fieldcollections' => [Fieldcollections::class, 'install'],
-        'classes' => [ClassDefinitions::class, 'install'],
-        'objectbricks' => [ObjectBricks::class, 'install'],
+        'classificationstores' => [ClassificationStores::class, 'install'],
+        'fieldcollections'     => [Fieldcollections::class, 'install'],
+        'classes'              => [ClassDefinitions::class, 'install'],
+        'objectbricks'         => [ObjectBricks::class, 'install'],
     ];
 
     public function bootstrap(

@@ -1,9 +1,0 @@
-imports:
-    - { resource: 'packages/' }
-
-opendxp:
-    general:
-        timezone: '%env(TEST_TIMEZONE)%'
-        domain: '%env(TEST_DOMAIN)%'
-    encryption:
-        secret: '%env(APP_SECRET)%'
