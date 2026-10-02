@@ -8,6 +8,9 @@ use OpenDxp;
 use OpenDxp\Bundle\StaticRoutesBundle\Model\Staticroute;
 use OpenDxp\Cache\RuntimeCache;
 use OpenDxp\Config;
+use OpenDxp\Model\DataObject;
+use OpenDxp\Model\DataObject\Localizedfield;
+use OpenDxp\Model\Document;
 use OpenDxp\Model\Site;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -38,9 +41,12 @@ abstract class TestCase extends KernelTestCase
         parent::setUp();
 
         self::bootKernel();
+
         Container::setFactory(static fn () => self::getContainer());
         Browser::reset();
         Container::requestStack()->push(self::request());
+
+        self::serveTheFrontend();
     }
 
     protected function tearDown(): void
@@ -60,6 +66,19 @@ abstract class TestCase extends KernelTestCase
         }
 
         parent::tearDown();
+    }
+
+    /**
+     * A test answers no request, so nothing sets the statics OpenDxpContextListener sets for the
+     * frontend.
+     */
+    private static function serveTheFrontend(): void
+    {
+        OpenDxp::unsetAdminMode();
+        Document::setHideUnpublished(true);
+        DataObject::setHideUnpublished(true);
+        DataObject::setGetInheritedValues(true);
+        Localizedfield::setGetFallbackValues(true);
     }
 
     /**
