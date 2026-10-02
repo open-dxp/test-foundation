@@ -18,11 +18,13 @@ final class InstallDefinitions implements Extension
 {
     private const string DEFAULT_DIRECTORY = 'tests/Fixtures';
 
-    // A class definition names the fieldcollections and bricks it holds, so those come first.
+    // A class names the fieldcollections it holds and drops one that is not there yet, while an
+    // objectbrick names the classes it belongs to and registers itself on them. So the collections
+    // come first, then the classes, then the bricks.
     private const array DEFINITIONS = [
         'fieldcollections' => [Fieldcollections::class, 'install'],
-        'objectbricks' => [ObjectBricks::class, 'install'],
         'classes' => [ClassDefinitions::class, 'install'],
+        'objectbricks' => [ObjectBricks::class, 'install'],
     ];
 
     public function bootstrap(
