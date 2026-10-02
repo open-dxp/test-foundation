@@ -19,7 +19,8 @@ final class InstallDefinitions implements Extension
 {
     private const string DEFAULT_DIRECTORY = 'tests/Fixtures';
 
-    // A class names its stores and fieldcollections, and a brick registers itself on its classes, so the order matters.
+    // Classes refer to classification stores and field collections, and object bricks refer to classes.
+    // Each kind is installed after the kinds it refers to.
     private const array DEFINITIONS = [
         'classificationstores' => [ClassificationStores::class, 'install'],
         'fieldcollections'     => [Fieldcollections::class, 'install'],

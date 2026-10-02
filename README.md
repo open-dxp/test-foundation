@@ -200,8 +200,8 @@ Such a test carries `->group('browser')`.
 
 ## Static analysis
 
-PHPStan reads the container the test kernel writes. The package's `phpstan.neon` names its paths and
-that container:
+PHPStan reads the container the test kernel writes. The package's `phpstan.neon` lists the paths to
+analyse and points at that container:
 
 ```neon
 parameters:
