@@ -12,6 +12,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
@@ -40,7 +41,8 @@ final class AnalyseCommand extends Command
             ->addArgument('check', InputArgument::OPTIONAL, sprintf(
                 'One of %s. All configured checks by default.',
                 implode(', ', [self::LINT, ...array_keys(self::TOOL_CONFIGURATION_FILES)]),
-            ));
+            ))
+            ->addOption('baseline', null, InputOption::VALUE_NONE, 'Write the PHPStan baseline beside phpstan.neon instead of reporting');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -53,12 +55,15 @@ final class AnalyseCommand extends Command
         $toolConfigurations = $this->findToolConfigurations($application, $packageDirectory);
         $failed = false;
 
-        foreach ($this->selectChecks($toolConfigurations, $packageDirectory, $input->getArgument('check')) as $check) {
+        $writeBaseline = (bool) $input->getOption('baseline');
+        $requestedCheck = $writeBaseline ? 'phpstan' : $input->getArgument('check');
+
+        foreach ($this->selectChecks($toolConfigurations, $packageDirectory, $requestedCheck) as $check) {
             $output->writeln(sprintf('<info>%s</info>', $check));
 
             $exitCode = $check === self::LINT
                 ? $this->runLint($runner, $application, $packageDirectory)
-                : $this->runTool($runner, $application, $check, $toolConfigurations[$check]);
+                : $this->runTool($runner, $application, $check, $toolConfigurations[$check], $writeBaseline);
 
             $failed = $failed || $exitCode !== 0;
         }
@@ -173,7 +178,7 @@ final class AnalyseCommand extends Command
         return $packageName !== '' && is_dir($application->directory . '/vendor/' . $packageName);
     }
 
-    private function runTool(ProcessRunner $runner, TestApplication $application, string $tool, string $configurationFile): int
+    private function runTool(ProcessRunner $runner, TestApplication $application, string $tool, string $configurationFile, bool $writeBaseline): int
     {
         if (!is_file($application->directory . '/vendor/bin/' . $tool)) {
             throw new RuntimeException(sprintf('%s is configured but not installed. The package requires it in require-dev.', $tool));
@@ -186,8 +191,10 @@ final class AnalyseCommand extends Command
             $runner->mustRun($application->consoleCommand('cache:warmup', '-q'), [...$environment, 'APP_DEBUG' => '1']);
         }
 
+        $baselineArguments = $writeBaseline ? ['--generate-baseline=' . dirname($configurationFile) . '/phpstan-baseline.neon'] : [];
+
         return $runner->run(match ($tool) {
-            'phpstan' => $application->vendorBinaryCommand('phpstan', 'analyse', '-c', $configurationFile),
+            'phpstan' => $application->vendorBinaryCommand('phpstan', 'analyse', '-c', $configurationFile, ...$baselineArguments),
             'deptrac' => $application->vendorBinaryCommand('deptrac', 'analyse', '-c', $configurationFile),
             'phparkitect' => $application->vendorBinaryCommand('phparkitect', 'check', '--config=' . $configurationFile),
             default => throw new LogicException(sprintf('There is no tool called %s.', $tool)),
