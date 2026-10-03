@@ -60,10 +60,10 @@ trait Testable
         }
 
         $beside = dirname((new ReflectionClass(static::class))->getFileName());
-        $state = sprintf('%s/config/%s.yaml', $beside, $this->getEnvironment());
+        $environment = sprintf('%s/config/%s.yaml', $beside, $this->getEnvironment());
 
-        if (is_file($state)) {
-            $loader->load($state);
+        if (is_file($environment)) {
+            $loader->load($environment);
         }
     }
 
