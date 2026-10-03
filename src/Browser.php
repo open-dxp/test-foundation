@@ -13,8 +13,6 @@ use Zenstruck\Browser\PlaywrightBrowser;
 
 final class Browser
 {
-    private const string ADMIN_FIREWALL = 'opendxp_admin';
-
     private static ?Closure $playwright = null;
 
     private static ?Client $client = null;
@@ -26,12 +24,12 @@ final class Browser
 
     public static function actingAs(User $user): KernelBrowser
     {
-        return self::start()->actingAs(new SecurityUser($user), self::ADMIN_FIREWALL);
+        return self::start()->actingAs(new SecurityUser($user), Admin::FIREWALL);
     }
 
     public static function playwrightActingAs(User $user): PlaywrightBrowser
     {
-        return self::playwright()->actingAs(new SecurityUser($user), self::ADMIN_FIREWALL);
+        return self::playwright()->actingAs(new SecurityUser($user), Admin::FIREWALL);
     }
 
     /**

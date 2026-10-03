@@ -321,6 +321,17 @@ Browser::playwrightActingAs(UserFactory::new()->admin()->create())
 `visit()` sends the request to the kernel directly, and no JavaScript runs. `playwright()` drives
 a real browser. A test that does this extends `BrowserTestCase` and is in the group `browser`.
 
+## The logged in user
+
+A test that calls a service directly, without a request, names the logged in backend user with
+`Admin`:
+
+```php
+Admin::actingAs(UserFactory::new()->admin()->create());
+```
+
+A service that asks who is logged in is then handed this user.
+
 ## Static analysis
 
 PHPStan reads the container the test kernel writes. The `phpstan.neon` of the package lists the
