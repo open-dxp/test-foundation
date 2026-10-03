@@ -78,7 +78,8 @@ final class BundleCommand extends Command
         // Composer installs require-dev only for the root package, and the bundle is a dependency here.
         $devRequirements = $bundleManifest['require-dev'] ?? [];
 
-        if (!isset($devRequirements[self::FOUNDATION])) {
+        // The foundation testing itself is installed already, as the package under test.
+        if ($bundleManifest['name'] !== self::FOUNDATION && !isset($devRequirements[self::FOUNDATION])) {
             throw new RuntimeException(sprintf('%s does not require %s in require-dev.', $bundleManifest['name'], self::FOUNDATION));
         }
 
