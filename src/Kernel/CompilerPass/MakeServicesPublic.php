@@ -24,7 +24,7 @@ final readonly class MakeServicesPublic implements CompilerPassInterface
     public function process(ContainerBuilder $container): void
     {
         foreach ($container->getDefinitions() as $definition) {
-            if ($this->isDefinedHere($container, $definition)) {
+            if ($this->isUnderTest($container, $definition)) {
                 $definition->setPublic(true);
             }
         }
@@ -32,13 +32,13 @@ final readonly class MakeServicesPublic implements CompilerPassInterface
         foreach ($container->getAliases() as $alias) {
             $target = (string) $alias;
 
-            if ($container->hasDefinition($target) && $this->isDefinedHere($container, $container->getDefinition($target))) {
+            if ($container->hasDefinition($target) && $this->isUnderTest($container, $container->getDefinition($target))) {
                 $alias->setPublic(true);
             }
         }
     }
 
-    private function isDefinedHere(ContainerBuilder $container, Definition $definition): bool
+    private function isUnderTest(ContainerBuilder $container, Definition $definition): bool
     {
         if ($definition->isAbstract() || $definition->isSynthetic()) {
             return false;
