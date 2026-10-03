@@ -50,16 +50,16 @@ final class BundleCommand extends Command
 
         $this->writeApplicationManifest($applicationDirectory, $bundleDirectory, $bundleManifest);
 
-        (new ProcessRunner($output, $applicationDirectory))->mustRun([
+        $composer = [
             PHP_BINARY,
             (new ExecutableFinder())->find('composer') ?? throw new RuntimeException('composer is not on the PATH.'),
-            'require',
-            '--no-interaction',
-            '--no-progress',
-            '--no-scripts',
-            '--with-all-dependencies',
-            ...$this->collectRequirements($bundleManifest, $input->getOption('opendxp')),
-        ]);
+        ];
+        $runner = new ProcessRunner($output, $applicationDirectory);
+
+        // One resolution over everything, so that the bundle's requirements can still move what the foundation
+        // brought, for example back to Pest 4 when a development dependency does not allow Pest 5.
+        $runner->mustRun([...$composer, 'require', '--no-update', '--no-interaction', ...$this->collectRequirements($bundleManifest, $input->getOption('opendxp'))]);
+        $runner->mustRun([...$composer, 'update', '--no-interaction', '--no-progress', '--no-scripts']);
 
         $this->copyApplicationTemplate($applicationDirectory);
         $this->copyTestSuite($applicationDirectory, $bundleDirectory);
