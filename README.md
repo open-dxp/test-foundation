@@ -113,25 +113,25 @@ tests/
 `tests/Pest.php` assigns a test case to each directory:
 
 ```php
-pest()->extend(TestCase::class)->use(Factories::class)->in('Feature/Area');
-pest()->extend(BrowserTestCase::class)->use(Factories::class)->in('Feature/Browser');
+pest()->extend(TestCase::class)->in('Feature/Area');
+pest()->extend(BrowserTestCase::class)->in('Feature/Browser');
 ```
 
-|                   |                                            |
-|-------------------|--------------------------------------------|
-| `TestCase`        | boots the application and handles requests |
-| `BrowserTestCase` | the same, plus a real browser              |
-| `StateTestCase`   | the same, booted in a named state          |
+|                       |                                            |
+|-----------------------|--------------------------------------------|
+| `TestCase`            | boots the application and handles requests |
+| `BrowserTestCase`     | the same, plus a real browser              |
+| `EnvironmentTestCase` | the same, booted in a named environment    |
 
 A test case of your own goes into `tests/TestCase/` and is not `final`, because Pest extends it.
 
-A state is a second configuration of the same application. The kernel loads
-`tests/Application/config/<state>.yaml` for it:
+An environment is a second configuration of the same application. The kernel loads
+`tests/Application/config/<environment>.yaml` for it:
 
 ```php
-class ThemeTestCase extends StateTestCase
+class ThemeTestCase extends EnvironmentTestCase
 {
-    protected static function state(): string
+    protected static function environment(): string
     {
         return 'theme';
     }

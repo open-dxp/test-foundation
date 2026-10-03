@@ -15,9 +15,12 @@ use OpenDxp\Model\Site;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Zenstruck\Foundry\Test\Factories;
 
 abstract class TestCase extends KernelTestCase
 {
+    use Factories;
+
     protected static function request(): Request
     {
         $request = Request::create('/');
