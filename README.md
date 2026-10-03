@@ -375,6 +375,10 @@ The test foundation follows semantic versioning. A major version comes when exis
 break otherwise. That happens with a new major version of Pest, Foundry, PHPUnit or OpenDXP, or
 when the foundation changes its own API.
 
-| Test foundation | OpenDXP | Pest | PHP           |
-|-----------------|---------|------|---------------|
-| 1.x             | 1.5+    | 4    | 8.3, 8.4, 8.5 |
+| Test foundation | OpenDXP | PHP           | Pest                              |
+|-----------------|---------|---------------|-----------------------------------|
+| 1.x             | 1.5+    | 8.3, 8.4, 8.5 | 4 on PHP 8.3, 5 on PHP 8.4 and up |
+
+Composer picks the Pest version that fits the PHP version and the other dependencies of the
+package. A package whose development dependencies do not allow Pest 5 stays on Pest 4. A test
+therefore uses only what Pest 4 and Pest 5 both offer.
