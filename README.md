@@ -90,6 +90,11 @@ final class TestKernel extends BaseTestKernel
 }
 ```
 
+`getServicesClass()` names a class of the bundle, usually the bundle class itself. Every service
+whose id starts with the namespace of that class becomes public in the test application, and so
+does every alias. A test can then fetch the service with `Container::get()`. Symfony keeps services
+private by default, and a private service cannot be fetched.
+
 ### 4. Assign the test case
 
 `tests/Pest.php`:
@@ -170,6 +175,8 @@ final class TestKernel extends Kernel
     }
 }
 ```
+
+Here `getServicesClass()` returns `App\Kernel`, so every service under `App\` becomes public.
 
 `phpunit.xml.dist` and `tests/Pest.php` are the same as for a bundle. `KERNEL_CLASS` names
 `App\Tests\TestKernel`. A project has no `tests/Application/` directory.
