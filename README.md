@@ -78,22 +78,12 @@ use OpenDxp\TestFoundation\Kernel\TestKernel as BaseTestKernel;
 
 final class TestKernel extends BaseTestKernel
 {
-    protected function getServicesClass(): string
-    {
-        return AcmeBlogBundle::class;
-    }
-
     public function registerBundlesToCollection(BundleCollection $collection): void
     {
         $collection->addBundle(new AcmeBlogBundle());
     }
 }
 ```
-
-`getServicesClass()` names a class of the bundle, usually the bundle class itself. Every service
-whose id starts with the namespace of that class becomes public in the test application, and so
-does every alias. A test can then fetch the service with `Container::get()`. Symfony keeps services
-private by default, and a private service cannot be fetched.
 
 ### 4. Assign the test case
 
@@ -168,15 +158,8 @@ use OpenDxp\TestFoundation\Kernel\Testable;
 final class TestKernel extends Kernel
 {
     use Testable;
-
-    protected function getServicesClass(): string
-    {
-        return Kernel::class;
-    }
 }
 ```
-
-Here `getServicesClass()` returns `App\Kernel`, so every service under `App\` becomes public.
 
 `phpunit.xml.dist` and `tests/Pest.php` are the same as for a bundle. `KERNEL_CLASS` names
 `App\Tests\TestKernel`. A project has no `tests/Application/` directory.
@@ -241,9 +224,12 @@ Container::get(PostManager::class);
 Container::parameter('acme_blog.posts_per_page');
 ```
 
-Every service of the bundle is public in the test application. A service definition that only
-works because Symfony removes unused services shows up as an error here. Fix it in the bundle's
-own configuration.
+Every service whose class the package under test or its tests define is public in the test
+application. Symfony would otherwise remove a private service that nothing injects, and a test could
+not fetch it. The services of other packages stay as they are.
+
+A service definition that only works because Symfony removes it shows up as an error here. Fix it
+in the package's own configuration.
 
 ## Test data
 

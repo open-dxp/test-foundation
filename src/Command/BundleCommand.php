@@ -124,6 +124,7 @@ final class BundleCommand extends Command
         $manifest['prefer-stable'] = true;
         $manifest['config']['sort-packages'] = true;
         $manifest['config']['allow-plugins'] = array_fill_keys(self::ALLOWED_PLUGINS, true);
+        $manifest['extra']['opendxp-test']['package'] = $bundleManifest['name'];
         $manifest['autoload']['psr-4']['OpenDxp\\Model\\DataObject\\'] = 'var/classes/DataObject';
         $manifest['autoload-dev']['psr-4'] = $bundleManifest['autoload-dev']['psr-4'] ?? [];
 

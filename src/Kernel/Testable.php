@@ -11,7 +11,9 @@ use OpenDxp\HttpKernel\BundleCollection\BundleCollection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\DisableCsrfProtection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\MakeServicesPublic;
 use OpenDxp\TestFoundation\GeoIp;
+use Composer\InstalledVersions;
 use ReflectionClass;
+use RuntimeException;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -29,11 +31,6 @@ trait Testable
         OpenDxpStaticRoutesBundle::class => 'static-routes.yaml',
         OpenDxpCustomReportsBundle::class => 'custom-reports.yaml',
     ];
-
-    /**
-     * @return class-string
-     */
-    abstract protected function getServicesClass(): string;
 
     protected function registerCoreBundlesToCollection(BundleCollection $collection): void
     {
@@ -90,9 +87,36 @@ trait Testable
         $container->addCompilerPass(new DisableCsrfProtection());
 
         $container->addCompilerPass(
-            new MakeServicesPublic((new ReflectionClass($this->getServicesClass()))->getNamespaceName()),
+            new MakeServicesPublic($this->directoriesUnderTest()),
             PassConfig::TYPE_BEFORE_OPTIMIZATION,
             -100000,
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function directoriesUnderTest(): array
+    {
+        $tests = realpath($this->getProjectDir() . '/tests');
+
+        return $tests === false ? [$this->packageUnderTest()] : [$this->packageUnderTest(), $tests];
+    }
+
+    /**
+     * A bundle is tested inside an application that `opendxp-test bundle` builds and names it in. A project is the
+     * application.
+     */
+    private function packageUnderTest(): string
+    {
+        $manifest = json_decode((string) file_get_contents($this->getProjectDir() . '/composer.json'), true);
+        $package = $manifest['extra']['opendxp-test']['package'] ?? null;
+
+        $directory = $package === null
+            ? $this->getProjectDir()
+            : InstalledVersions::getInstallPath($package);
+
+        return realpath((string) $directory)
+            ?: throw new RuntimeException(sprintf('The package under test has no directory at %s.', $directory));
     }
 }
