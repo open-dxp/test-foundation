@@ -10,6 +10,7 @@ use OpenDxp\Bundle\StaticRoutesBundle\OpenDxpStaticRoutesBundle;
 use OpenDxp\HttpKernel\BundleCollection\BundleCollection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\DisableCsrfProtection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\MakeServicesPublic;
+use OpenDxp\TestFoundation\GeoIp;
 use ReflectionClass;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
@@ -45,6 +46,11 @@ trait Testable
 
     public function registerContainerConfiguration(LoaderInterface $loader): void
     {
+        // Set before the application's configuration, so that a bundle or project naming its own database wins.
+        $loader->load(static function (ContainerBuilder $container): void {
+            $container->setParameter('opendxp.geoip.db_file', realpath(GeoIp::DATABASE));
+        });
+
         parent::registerContainerConfiguration($loader);
 
         $package = dirname(__DIR__, 2) . '/config';

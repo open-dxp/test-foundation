@@ -1,0 +1,10 @@
+{
+    "AT": {"address": "194.166.128.22", "continent": "EU", "name": "Austria", "latitude": 48.2082, "longitude": 16.3738},
+    "BE": {"address": "31.5.255.255", "continent": "EU", "name": "Belgium", "latitude": 50.8503, "longitude": 4.3517},
+    "CH": {"address": "5.148.191.255", "continent": "EU", "name": "Switzerland", "latitude": 47.3769, "longitude": 8.5417},
+    "DE": {"address": "2.175.255.255", "continent": "EU", "name": "Germany", "latitude": 52.52, "longitude": 13.405},
+    "FR": {"address": "46.162.191.255", "continent": "EU", "name": "France", "latitude": 48.8566, "longitude": 2.3522},
+    "HK": {"address": "59.148.0.0", "continent": "AS", "name": "Hong Kong", "latitude": 22.3193, "longitude": 114.1694},
+    "HU": {"address": "188.142.192.35", "continent": "EU", "name": "Hungary", "latitude": 47.4979, "longitude": 19.0402},
+    "US": {"address": "52.33.249.128", "continent": "NA", "name": "United States", "latitude": 45.5152, "longitude": -122.6784}
+}
