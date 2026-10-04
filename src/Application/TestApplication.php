@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation\Application;
 
+use Composer\InstalledVersions;
 use RuntimeException;
 use Symfony\Component\Dotenv\Dotenv;
 
@@ -42,6 +43,35 @@ final readonly class TestApplication
         }
 
         throw new RuntimeException(sprintf('%s names no KERNEL_CLASS in phpunit.xml.dist.', $directory));
+    }
+
+    /**
+     * The namespaces of the migrations the package under test ships. A bundle is tested inside an application that
+     * names it in composer.json. A project is the application and names no package, so it has none.
+     *
+     * @return list<string>
+     */
+    public function migrationNamespacesOfPackageUnderTest(): array
+    {
+        $manifest = json_decode((string) file_get_contents($this->directory . '/composer.json'), true);
+        $package = $manifest['extra']['opendxp-test']['package'] ?? null;
+
+        if ($package === null) {
+            return [];
+        }
+
+        $directory = InstalledVersions::getInstallPath($package)
+            ?? throw new RuntimeException(sprintf('The package under test %s is not installed.', $package));
+
+        $namespaces = [];
+
+        foreach (glob($directory . '/{src,lib}/{,*/,*/*/}Migrations/Version*.php', GLOB_BRACE) ?: [] as $migration) {
+            if (preg_match('/^namespace ([^;]+);/m', (string) file_get_contents($migration), $match)) {
+                $namespaces[$match[1]] = true;
+            }
+        }
+
+        return array_keys($namespaces);
     }
 
     /**

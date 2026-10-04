@@ -8,6 +8,7 @@ use OpenDxp\TestFoundation\Application\EnvironmentFile;
 use OpenDxp\TestFoundation\Application\ProcessRunner;
 use OpenDxp\TestFoundation\Application\TestApplication;
 use OpenDxp\TestFoundation\Dto\DatabaseConnection;
+use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -60,6 +61,25 @@ final class InstallCommand extends Command
                 $output->writeln('Installing ' . $bundle);
                 $runner->mustRun($application->consoleCommand('opendxp:bundle:install', $bundle, '--no-post-change-commands', '-q'), $environment);
                 $installed[] = $bundle;
+            }
+        }
+
+        // An installer that skips parent::install() leaves its bundle installable, and one that does not mark its
+        // migrations leaves them to run on top of the state it already built.
+        $notMarked = $this->findUninstalledBundles($application, $environment);
+
+        if ($notMarked !== []) {
+            throw new RuntimeException(sprintf('%s ran its installer but is not marked as installed.', implode(', ', $notMarked)));
+        }
+
+        foreach ($application->migrationNamespacesOfPackageUnderTest() as $namespace) {
+            try {
+                $runner->mustRun($application->consoleCommand('doctrine:migrations:up-to-date', '--prefix=' . $namespace . '\\'), $environment);
+            } catch (RuntimeException) {
+                throw new RuntimeException(sprintf(
+                    'The installation leaves migrations of %s to run. The installer calls markMigrationsAsExecuted() in install().',
+                    $namespace,
+                ));
             }
         }
 
