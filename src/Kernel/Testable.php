@@ -49,6 +49,21 @@ trait Testable
             $container->setParameter('opendxp.geoip.db_file', realpath(GeoIp::DATABASE));
         });
 
+        $beside = dirname((new ReflectionClass(static::class))->getFileName());
+
+        // Symfony accepts new firewalls only from the first file that names any. A bundle that needs a firewall of its
+        // own, like a frontend login, therefore lists all firewalls in this file, and it is loaded before the
+        // application's.
+        $security = $beside . '/config/security.yaml';
+
+        $loader->load(static function (ContainerBuilder $container) use ($security): void {
+            $container->addResource(new FileExistenceResource($security));
+        });
+
+        if (is_file($security)) {
+            $loader->load($security);
+        }
+
         parent::registerContainerConfiguration($loader);
 
         $package = dirname(__DIR__, 2) . '/config';
@@ -63,7 +78,6 @@ trait Testable
             }
         }
 
-        $beside = dirname((new ReflectionClass(static::class))->getFileName());
         $environment = sprintf('%s/config/%s.yaml', $beside, $this->getEnvironment());
 
         // Without the resource, a configuration added after the first run would be ignored until the cache is cleared.
