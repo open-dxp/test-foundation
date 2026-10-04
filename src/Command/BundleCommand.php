@@ -126,12 +126,31 @@ final class BundleCommand extends Command
         $manifest['config']['allow-plugins'] = array_fill_keys(self::ALLOWED_PLUGINS, true);
         $manifest['extra']['opendxp-test']['package'] = $bundleManifest['name'];
         $manifest['autoload']['psr-4']['OpenDxp\\Model\\DataObject\\'] = 'var/classes/DataObject';
-        $manifest['autoload-dev']['psr-4'] = $bundleManifest['autoload-dev']['psr-4'] ?? [];
+        $manifest['autoload-dev']['psr-4'] = array_map(
+            fn (string|array $paths): string|array => $this->locateDevelopmentPaths($paths, $bundleManifest['name']),
+            $bundleManifest['autoload-dev']['psr-4'] ?? [],
+        );
 
         file_put_contents(
             $applicationDirectory . '/composer.json',
             json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n",
         );
+    }
+
+    /**
+     * The tests are copied into the application, every other development path stays in the installed package.
+     *
+     * @param string|list<string> $paths
+     *
+     * @return string|list<string>
+     */
+    private function locateDevelopmentPaths(string|array $paths, string $package): string|array
+    {
+        if (is_array($paths)) {
+            return array_map(fn (string $path): string => $this->locateDevelopmentPaths($path, $package), $paths);
+        }
+
+        return str_starts_with(trim($paths, './'), 'tests') ? $paths : sprintf('vendor/%s/%s', $package, ltrim($paths, './'));
     }
 
     /**
