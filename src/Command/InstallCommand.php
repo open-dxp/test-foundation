@@ -52,9 +52,15 @@ final class InstallCommand extends Command
         ), $environment);
 
         // An uninstalled bundle creates its tables inside the first test that needs them, and that DDL ends the test's transaction.
-        foreach ($this->findUninstalledBundles($application, $environment) as $bundle) {
-            $output->writeln('Installing ' . $bundle);
-            $runner->mustRun($application->consoleCommand('opendxp:bundle:install', $bundle, '--no-post-change-commands', '-q'), $environment);
+        // A bundle can become installable only once another one is installed, so the list is asked again after each round.
+        $installed = [];
+
+        while ($bundles = array_diff($this->findUninstalledBundles($application, $environment), $installed)) {
+            foreach ($bundles as $bundle) {
+                $output->writeln('Installing ' . $bundle);
+                $runner->mustRun($application->consoleCommand('opendxp:bundle:install', $bundle, '--no-post-change-commands', '-q'), $environment);
+                $installed[] = $bundle;
+            }
         }
 
         $runner->mustRun($application->consoleCommand('assets:install', 'public', '-q'), $environment);
