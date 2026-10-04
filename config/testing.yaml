@@ -15,6 +15,11 @@ opendxp:
     documents:
         default_controller: 'OpenDxp\TestFoundation\Controller\DefaultController::defaultAction'
 
+    email:
+        debug:
+            # Tests run in debug mode, where OpenDXP sends every mail to this address instead of its recipients.
+            email_addresses: 'debug@test-foundation.test'
+
     config_location:
         image_thumbnails:
             write_target: { type: 'settings-store' }
