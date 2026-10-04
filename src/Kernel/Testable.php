@@ -15,6 +15,7 @@ use Composer\InstalledVersions;
 use ReflectionClass;
 use RuntimeException;
 use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Config\Resource\FileExistenceResource;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use DAMA\DoctrineTestBundle\DAMADoctrineTestBundle;
@@ -64,6 +65,11 @@ trait Testable
 
         $beside = dirname((new ReflectionClass(static::class))->getFileName());
         $environment = sprintf('%s/config/%s.yaml', $beside, $this->getEnvironment());
+
+        // Without the resource, a configuration added after the first run would be ignored until the cache is cleared.
+        $loader->load(static function (ContainerBuilder $container) use ($environment): void {
+            $container->addResource(new FileExistenceResource($environment));
+        });
 
         if (is_file($environment)) {
             $loader->load($environment);
