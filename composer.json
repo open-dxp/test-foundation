@@ -38,7 +38,10 @@
         "bin/opendxp-test"
     ],
     "extra": {
-        "app-template": "app"
+        "app-template": "app",
+        "branch-alias": {
+            "dev-1.x": "1.0.x-dev"
+        }
     },
     "minimum-stability": "stable"
 }
