@@ -382,6 +382,9 @@ under `config/packages/`.
 
 ## Versions
 
+The major version follows OpenDXP. Test foundation 1.x supports OpenDXP 1.x, and 2.x will support
+OpenDXP 2.x.
+
 The test foundation follows semantic versioning. A major version comes when existing tests would
 break otherwise. That happens with a new major version of Pest, Foundry, PHPUnit or OpenDXP, or
 when the foundation changes its own API.
