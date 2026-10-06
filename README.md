@@ -1,15 +1,22 @@
 # OpenDXP Test Foundation
 
-The test foundation gives an OpenDXP bundle or project everything it needs for tests:
+The test foundation gives an OpenDXP bundle or project what it needs to run tests:
 
 - a test kernel
 - test cases that boot the application
-- factories for test data
 - a browser
 - the commands that build, install and check the application the tests run in
 
-Tests are written with [Pest](https://pestphp.com). Test data is created with
-[Foundry](https://github.com/zenstruck/foundry).
+Tests are written with [Pest](https://pestphp.com). Test data is created with the
+[Foundry](https://github.com/zenstruck/foundry) factories that OpenDXP ships in `OpenDxp\Test`.
+
+This README describes how you set up a package and what the foundation offers. How you write the
+tests, and the test API of OpenDXP with its factories and expectations, are described in
+[Testing][testing] in the documentation of OpenDXP.
+
+[testing]: https://github.com/open-dxp/opendxp/blob/1.x/doc/19_Development_Tools_and_Details/29_Testing/README.md
+[writing-tests]: https://github.com/open-dxp/opendxp/blob/1.x/doc/19_Development_Tools_and_Details/29_Testing/03_Writing_Tests.md
+[factories]: https://github.com/open-dxp/opendxp/blob/1.x/doc/19_Development_Tools_and_Details/29_Testing/05_Factories_and_Stories.md
 
 ## Quick start for a bundle
 
@@ -49,6 +56,7 @@ dependency there.
     </testsuites>
     <extensions>
         <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
+        <bootstrap class="Zenstruck\Foundry\PHPUnit\FoundryExtension"/>
         <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallDefinitions"/>
     </extensions>
     <php>
@@ -56,6 +64,10 @@ dependency there.
     </php>
 </phpunit>
 ```
+
+The extension of Foundry starts Foundry for every test. Without it, no factory works.
+`InstallDefinitions` installs the data object classes of the package, as
+[Data object classes](#data-object-classes) describes.
 
 Add `<directory>tests/Unit</directory>` once the bundle has unit tests. PHPUnit stops when a
 directory it names does not exist.
@@ -87,17 +99,23 @@ final class TestKernel extends BaseTestKernel
 
 ### 4. Assign the test case
 
-`tests/Pest.php`:
+`tests/Pest.php` registers the expectations of OpenDXP and assigns the test case:
 
 ```php
 <?php
 
 declare(strict_types=1);
 
+use OpenDxp\Test\Expectation\Fields;
 use OpenDxp\TestFoundation\TestCase;
+
+Fields::register();
 
 pest()->extend(TestCase::class)->in('Feature');
 ```
+
+A package that tests redirects also calls `OpenDxp\Test\Expectation\Redirects::register()`. It
+needs `OpenDxpSeoBundle` in the test kernel.
 
 ### 5. Write the first test
 
@@ -166,25 +184,10 @@ final class TestKernel extends Kernel
 
 ## Directory structure
 
-```
-tests/
-    Pest.php            assigns the test cases
-    Feature/            tests that boot the application
-    Unit/               tests that do not boot the application
-    Application/        the application of a bundle: kernel, config, templates, controllers
-    Factory/            the factories of this package
-    Story/              fixture setups that several tests share
-    TestCase/           the test cases of this package
-    Datasets/           Pest datasets
-    Helpers/            helper functions, no classes
-    Fixtures/           data files and definitions
-```
-
-- Tests live only in `Feature` and `Unit`.
-- A browser test is a feature test in the group `browser`.
-- Name a test file after the class or the behaviour it tests.
-- Pest loads every file in `Helpers/` on its own. The file names there are lowercase, because a
-  file name in PascalCase promises a class.
+Tests live in `tests/Feature` and `tests/Unit`. The application of a bundle lives in
+`tests/Application`, and the definitions of its data object classes in `tests/Fixtures`.
+[Writing Tests][writing-tests] describes the rest of the layout and where each piece of test code
+goes.
 
 ## Test cases
 
@@ -202,8 +205,9 @@ A test case of your own goes into `tests/TestCase/`. It is not `final`, because 
 ### Another configuration
 
 Some behaviour only shows in another configuration, for example with the full page cache switched
-on. `EnvironmentTestCase` boots the application in a Symfony environment of its own. The kernel
-loads `tests/Application/config/<environment>.yaml` for it:
+on. `EnvironmentTestCase` boots the application in a Symfony environment of its own. The test
+kernel loads `config/<environment>.yaml` from its own directory. For a bundle that is
+`tests/Application/config/<environment>.yaml`, and for a project `tests/config/<environment>.yaml`:
 
 ```php
 class FullPageCacheTestCase extends EnvironmentTestCase
@@ -235,16 +239,8 @@ in the package's own configuration.
 
 ### Factories
 
-OpenDXP ships factories for its own models in `OpenDxp\Test\Factory`:
-
-```php
-$page = DocumentPageFactory::createOne(['key' => 'about-us']);
-$pages = DocumentPageFactory::createMany(5);
-$image = AssetImageFactory::createOne();
-$admin = UserFactory::new()->admin()->create();
-```
-
-A factory saves the object as its last step. `unsaved()` leaves that step out.
+OpenDXP ships factories for its own models in `OpenDxp\Test\Factory`, with base classes for the
+factories of your package. [Factories and Stories][factories] explains them.
 
 ### Data object classes
 
@@ -262,31 +258,13 @@ The `InstallDefinitions` extension installs them once, before the first test. Th
 changes the schema, and a schema change would end the transaction of a running test. That is why
 it runs before the tests and not inside them.
 
-A factory for a class of your own extends `AbstractDataObjectFactory`:
+The extension reads `tests/Fixtures` unless you name another directory:
 
-```php
-/**
- * @extends AbstractDataObjectFactory<Post>
- */
-final class PostFactory extends AbstractDataObjectFactory
-{
-    public static function class(): string
-    {
-        return Post::class;
-    }
-
-    protected function defaults(): array
-    {
-        return [
-            ...parent::defaults(),
-            'title' => self::faker()->sentence(),
-        ];
-    }
-}
+```xml
+<bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallDefinitions">
+    <parameter name="directory" value="tests/Definitions"/>
+</bootstrap>
 ```
-
-`AbstractDocumentFactory`, `AbstractElementFactory` and `AbstractSavingFactory` are the base
-classes for other models.
 
 ### Files
 
@@ -302,7 +280,11 @@ The test application uses a small GeoIP database. It knows one address in each o
 AT, BE, CH, DE, FR, HK, HU and US.
 
 ```php
-$client->setServerParameter('HTTP_CLIENT_IP', GeoIp::addressIn('CH'));
+$browser = Browser::start();
+$browser
+    ->client()
+    ->setServerParameter('HTTP_CLIENT_IP', GeoIp::addressIn('CH'));
+$browser->visit('/');
 ```
 
 The database is set in the parameter `opendxp.geoip.db_file`. A bundle that needs other countries
@@ -320,6 +302,9 @@ Browser::playwrightActingAs(UserFactory::new()->admin()->create())
 
 `visit()` sends the request to the kernel directly, and no JavaScript runs. `playwright()` drives
 a real browser. A test that does this extends `BrowserTestCase` and is in the group `browser`.
+
+A browser test never waits for a fixed time. The browser waits on its own, and a `sleep` hides a
+race.
 
 ## The logged in user
 
@@ -360,25 +345,16 @@ parameters:
 `DATABASE_SERVER_VERSION` name the database. The PHP that runs the commands is the PHP the
 application uses.
 
-| Command                     | What it does                                                                                                         |
-|-----------------------------|----------------------------------------------------------------------------------------------------------------------|
+| Command                     | What it does                                                                                                        |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------|
 | `bundle <path>`             | requires the bundle with its `require-dev` and optional packages, and copies the application template and the tests |
-| `install`                   | installs OpenDXP, the bundles and the data object classes, and warms the cache                                       |
-| `analyse <path> [check]`    | runs lint, and phpstan, deptrac and phparkitect where the package configures them                                    |
-| `analyse <path> --baseline` | writes the PHPStan baseline next to `phpstan.neon`                                                                   |
+| `install`                   | installs OpenDXP, the bundles and the data object classes, and warms the cache                                      |
+| `analyse <path> [check]`    | runs lint, and phpstan, deptrac and phparkitect where the package configures them                                   |
+| `analyse <path> --baseline` | writes the PHPStan baseline next to `phpstan.neon`                                                                  |
 
 `analyse` lints the templates of a bundle in the test application. A project lints them in the
 environment it is deployed to. That is `prod` or `production`, whichever the project configures
 under `config/packages/`.
-
-## Rules
-
-- The name of a test is a sentence that says what is guaranteed.
-- A test never waits for a fixed time. The browser waits on its own, and a `sleep` hides a race.
-- State that `beforeEach()` shares with the tests of a file goes on `$this`.
-- Behaviour that several directories share goes on their test case.
-- A helper without state is a function in `tests/Helpers/`.
-- Anything that builds a model and saves it is a factory.
 
 ## Versions
 
