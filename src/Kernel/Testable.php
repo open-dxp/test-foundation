@@ -6,6 +6,7 @@ namespace OpenDxp\TestFoundation\Kernel;
 
 use OpenDxp;
 use OpenDxp\Bundle\CustomReportsBundle\OpenDxpCustomReportsBundle;
+use OpenDxp\Bundle\SimpleBackendSearchBundle\OpenDxpSimpleBackendSearchBundle;
 use OpenDxp\Bundle\StaticRoutesBundle\OpenDxpStaticRoutesBundle;
 use OpenDxp\HttpKernel\BundleCollection\BundleCollection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\DisableCsrfProtection;
@@ -31,6 +32,7 @@ trait Testable
     private const array CONFIGURED_WHEN_PRESENT = [
         OpenDxpStaticRoutesBundle::class => 'static-routes.yaml',
         OpenDxpCustomReportsBundle::class => 'custom-reports.yaml',
+        OpenDxpSimpleBackendSearchBundle::class => 'simple-backend-search.yaml',
     ];
 
     protected function registerCoreBundlesToCollection(BundleCollection $collection): void

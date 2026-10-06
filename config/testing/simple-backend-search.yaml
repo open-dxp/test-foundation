@@ -1,0 +1,4 @@
+framework:
+    messenger:
+        transports:
+            opendxp_search_backend_message: 'in-memory://'

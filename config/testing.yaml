@@ -6,6 +6,16 @@ doctrine:
                 # that opens one of its own needs a savepoint rather than a second transaction.
                 use_savepoints: true
 
+framework:
+    messenger:
+        # A test that commits would leave its messages in the database, and every later run would work them off.
+        transports:
+            opendxp_core: 'in-memory://'
+            opendxp_maintenance: 'in-memory://'
+            opendxp_scheduled_tasks: 'in-memory://'
+            opendxp_image_optimize: 'in-memory://'
+            opendxp_asset_update: 'in-memory://'
+
 services:
     OpenDxp\TestFoundation\Controller\DefaultController:
         autowire: true
