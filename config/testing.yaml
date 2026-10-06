@@ -22,6 +22,12 @@ services:
         autoconfigure: true
 
 opendxp:
+    security:
+        password:
+            # Every user a factory writes gets a password, and a secure hash only slows the tests down.
+            options:
+                cost: 4
+
     documents:
         default_controller: 'OpenDxp\TestFoundation\Controller\DefaultController::defaultAction'
 
