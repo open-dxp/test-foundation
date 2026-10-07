@@ -64,7 +64,7 @@ it('sends what a person enters', function () {
         ->select('Color', 'Red')
         ->selectEach('Toppings', 'Cheese', 'Olives')
         ->pick('Size', 'Large')
-        ->checkWithin('Extras', 'Gift')
+        ->checkEachWithin('Extras', 'Gift')
         ->selectParts('Birthday', ['month' => 'Jun'])
         ->fillInParts('Birthday', ['year' => 1983]);
 

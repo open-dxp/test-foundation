@@ -202,6 +202,18 @@ final readonly class Page
     }
 
     /**
+     * Checks several choices in the region, where a form uses their labels twice.
+     */
+    public function checkEachWithin(string $region, string ...$labels): self
+    {
+        foreach ($labels as $label) {
+            $this->checkWithin($region, $label);
+        }
+
+        return $this;
+    }
+
+    /**
      * Presses a key in the browser, like Tab to leave a field, which a script may react to.
      */
     public function pressKey(string $key): self
