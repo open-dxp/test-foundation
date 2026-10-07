@@ -286,6 +286,21 @@ final readonly class Page
             ->each(static fn (Crawler $button) => self::read($button) ?: (string) $button->attr('value'));
     }
 
+    /**
+     * Whether the page shows a button. In a real browser a button its style hides does not count.
+     */
+    public function showsButton(string $button): bool
+    {
+        if (!$this->browser instanceof PlaywrightBrowser) {
+            return in_array($button, $this->buttons(), true);
+        }
+
+        return $this->playwright()
+            ->locator(sprintf('button:text-is("%1$s"), input[type="submit"][value="%1$s"]', $button))
+            ->first()
+            ->isVisible();
+    }
+
     public function hasLink(string $link): bool
     {
         return $this->links($this->crawler(), $link)->count() > 0;

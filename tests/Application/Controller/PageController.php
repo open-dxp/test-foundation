@@ -57,6 +57,7 @@ final class PageController extends FrontendController
                     <input name="birthday[year]" value="2000">
                 </div>
                 <button type="submit">Send</button>
+                <button type="button" style="display: none">Reset</button>
             </form>
         </body>
         </html>

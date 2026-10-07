@@ -35,3 +35,10 @@ it('reads what a person selects in the browser', function () {
 
     expect($page->selected('Toppings'))->toBe(['Cheese', 'Ham']);
 });
+
+it('tells whether the browser shows a button', function (string $button, bool $shown) {
+    expect(Page::inBrowser($this->path)->showsButton($button))->toBe($shown);
+})->with([
+    'a button it shows' => ['Send', true],
+    'a button its style hides' => ['Reset', false],
+]);

@@ -105,7 +105,7 @@ it('counts how often the page shows a text', function () {
 });
 
 it('reads the buttons of a page', function () {
-    expect(Page::open($this->path)->buttons())->toBe(['Send']);
+    expect(Page::open($this->path)->buttons())->toBe(['Send', 'Reset']);
 });
 
 it('finds a link by its text', function () {
