@@ -117,6 +117,22 @@ final readonly class Page
         return $this->selectOptions($this->field('select', $label, $this->crawler()), $label, ...$options);
     }
 
+    /**
+     * Fills in one input of a field made of several, like the year of a date, by the name of the part.
+     */
+    public function fillInPart(string $label, string $part, string|int $value): self
+    {
+        return $this->fillField($this->part('input', $label, $part), $value);
+    }
+
+    /**
+     * Selects in one list of a field made of several, like the month of a date, by the name of the part.
+     */
+    public function selectPart(string $label, string $part, string $option): self
+    {
+        return $this->selectOptions($this->part('select', $label, $part), $label, $option);
+    }
+
     public function check(string $label): self
     {
         $field = $this->field('input', $label, $this->crawler());
@@ -339,6 +355,22 @@ final readonly class Page
         }
 
         return $field;
+    }
+
+    private function part(string $element, string $label, string $part): Crawler
+    {
+        $input = $this->field('*', $label, $this->crawler())->filterXPath(sprintf(
+            'descendant::%s[substring(@name, string-length(@name) - %d) = "[%s]"]',
+            $element,
+            strlen($part) + 1,
+            $part,
+        ));
+
+        if ($input->count() !== 1) {
+            throw new LogicException(sprintf('The field "%s" has %d parts "%s".', $label, $input->count(), $part));
+        }
+
+        return $input;
     }
 
     private function fillField(Crawler $field, string|int $value): self

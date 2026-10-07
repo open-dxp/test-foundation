@@ -40,6 +40,11 @@ final class PageController extends FrontendController
                     <label><input type="radio" name="size" value="s"> Small</label>
                     <label><input type="radio" name="size" value="l"> Large</label>
                 </fieldset>
+                <label for="birthday">Birthday</label>
+                <div id="birthday">
+                    <select name="birthday[month]"><option value="5">May</option><option value="6">Jun</option></select>
+                    <input name="birthday[year]" value="2000">
+                </div>
                 <button type="submit">Send</button>
             </form>
         </body>

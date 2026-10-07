@@ -20,7 +20,7 @@ it('reads the fields of a form by their labels', function () {
     $page = Page::open($this->path);
 
     expect($page->labels())
-        ->toBe(['Name', 'Message', 'Color', 'Toppings', 'Newsletter', 'Small', 'Large'])
+        ->toBe(['Name', 'Message', 'Color', 'Toppings', 'Newsletter', 'Small', 'Large', 'Birthday'])
         ->and($page->value('Name'))
         ->toBe('Ada')
         ->and($page->value('Message'))
@@ -51,7 +51,9 @@ it('sends what a person enters', function () {
         ->fillIn('Message', 'Hi')
         ->select('Color', 'Red')
         ->selectEach('Toppings', 'Cheese', 'Olives')
-        ->pick('Size', 'Large');
+        ->pick('Size', 'Large')
+        ->selectPart('Birthday', 'month', 'Jun')
+        ->fillInPart('Birthday', 'year', 1983);
 
     $page->press('Send');
 
@@ -65,6 +67,7 @@ it('sends what a person enters', function () {
             'toppings: cheese, olives',
             'newsletter: yes',
             'size: l',
+            'birthday: 6, 1983',
         ]);
 });
 
