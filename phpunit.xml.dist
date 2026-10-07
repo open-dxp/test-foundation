@@ -8,6 +8,7 @@
         <testsuite name="open-dxp/test-foundation">
             <directory>tests/Feature</directory>
             <directory>tests/Unit</directory>
+            <directory>tests/Browser</directory>
         </testsuite>
     </testsuites>
     <extensions>

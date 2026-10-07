@@ -306,6 +306,24 @@ a real browser. A test that does this extends `BrowserTestCase` and is in the gr
 A browser test never waits for a fixed time. The browser waits on its own, and a `sleep` hides a
 race.
 
+### A page as a person uses it
+
+A frontend test uses `Page`. It finds a field by its label, a region by its ARIA name, and a button
+or a link by its text, so the test needs no selector:
+
+```php
+$page = Page::open('/en/contact')
+    ->fillIn('Name', 'Ada')
+    ->select('Topic', 'Support')
+    ->press('Send');
+
+expect($page->notifications())->toBe(['Thank you']);
+```
+
+`notifications()` reads every element with `role="alert"` or `role="status"`. `description()` reads
+the text a field names with `aria-describedby`, like a help text. A bundle builds the page objects of
+its own pages on top of `Page`. `Page::inBrowser()` opens the page in a real browser.
+
 ## The logged in user
 
 A test that calls a service directly, without a request, names the logged in backend user with

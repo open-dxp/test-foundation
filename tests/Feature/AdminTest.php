@@ -16,5 +16,7 @@ it('hands the user it acts as to a service that asks who is logged in', function
 
     Admin::actingAs($user);
 
-    expect(Container::get(TokenStorageInterface::class)->getToken()?->getUser()?->getUser()->getId())->toBe($user->getId());
+    $actingAs = Container::get(TokenStorageInterface::class)->getToken()?->getUser()?->getUser();
+
+    expect($actingAs?->getId())->toBe($user->getId());
 });
