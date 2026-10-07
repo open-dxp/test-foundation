@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation\Command;
 
+use OpenDxp\TestFoundation\Application\BundleRequirements;
 use OpenDxp\TestFoundation\Application\EnvironmentFile;
 use OpenDxp\TestFoundation\Application\ProcessRunner;
 use OpenDxp\TestFoundation\Application\TestApplication;
@@ -24,8 +25,6 @@ use Symfony\Component\Process\Process;
 )]
 final class BundleCommand extends Command
 {
-    private const string FOUNDATION = 'open-dxp/test-foundation';
-
     private const array ALLOWED_PLUGINS = [
         'open-dxp/*',
         'php-http/discovery',
@@ -58,7 +57,7 @@ final class BundleCommand extends Command
 
         // One resolution over everything, so that the bundle's requirements can still move what the foundation
         // brought, for example back to Pest 4 when a development dependency does not allow Pest 5.
-        $runner->mustRun([...$composer, 'require', '--no-update', '--no-interaction', ...$this->collectRequirements($bundleManifest, $input->getOption('opendxp'))]);
+        $runner->mustRun([...$composer, 'require', '--no-update', '--no-interaction', ...BundleRequirements::collect($bundleManifest, $input->getOption('opendxp'))]);
         $runner->mustRun([...$composer, 'update', '--no-interaction', '--no-progress', '--no-scripts']);
 
         $this->copyApplicationTemplate($applicationDirectory);
@@ -66,41 +65,6 @@ final class BundleCommand extends Command
         EnvironmentFile::writeFromTemplate($applicationDirectory);
 
         return self::SUCCESS;
-    }
-
-    /**
-     * @param array<string, mixed> $bundleManifest
-     *
-     * @return list<string>
-     */
-    private function collectRequirements(array $bundleManifest, ?string $opendxpConstraint): array
-    {
-        // Composer installs require-dev only for the root package, and the bundle is a dependency here.
-        $devRequirements = $bundleManifest['require-dev'] ?? [];
-
-        // The foundation testing itself is installed already, as the package under test.
-        if ($bundleManifest['name'] !== self::FOUNDATION && !isset($devRequirements[self::FOUNDATION])) {
-            throw new RuntimeException(sprintf('%s does not require %s in require-dev.', $bundleManifest['name'], self::FOUNDATION));
-        }
-
-        unset($devRequirements[self::FOUNDATION]);
-
-        $requirements = [$bundleManifest['name'] . ':*@dev'];
-
-        foreach ($devRequirements as $package => $constraint) {
-            $requirements[] = $package . ':' . $constraint;
-        }
-
-        foreach ($bundleManifest['extra']['opendxp-test']['optional'] ?? [] as $package) {
-            $requirements[] = $package . ':*';
-        }
-
-        // Core as the bundle under test is the checkout itself and cannot be forced to another version.
-        if ($opendxpConstraint !== null && $bundleManifest['name'] !== 'open-dxp/opendxp') {
-            $requirements[] = 'open-dxp/opendxp:' . $opendxpConstraint;
-        }
-
-        return $requirements;
     }
 
     /**
@@ -188,7 +152,7 @@ final class BundleCommand extends Command
 
     private function copyApplicationTemplate(string $applicationDirectory): void
     {
-        $foundationDirectory = $applicationDirectory . '/vendor/' . self::FOUNDATION;
+        $foundationDirectory = $applicationDirectory . '/vendor/' . BundleRequirements::FOUNDATION;
         $templateDirectory = $foundationDirectory . '/' . self::readJson($foundationDirectory . '/composer.json')['extra']['app-template'];
 
         $filesystem = new Filesystem();

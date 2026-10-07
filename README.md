@@ -339,6 +339,20 @@ parameters:
 | never, but users may want it                        | `suggest`                     |
 | only for its tests, and not everyone can install it | `extra.opendxp-test.optional` |
 
+`extra.opendxp-test.optional` maps each package to a constraint, like `require-dev`:
+
+```json
+"extra": {
+    "opendxp-test": {
+        "optional": {
+            "open-dxp/formbuilder-bundle": "^1.0"
+        }
+    }
+}
+```
+
+A list of package names is still read. Each package in it takes any version.
+
 ## Commands
 
 `vendor/bin/opendxp-test` builds and checks the application. `DATABASE_URL` and
