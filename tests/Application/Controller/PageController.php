@@ -58,6 +58,7 @@ final class PageController extends FrontendController
                 </div>
                 <button type="submit">Send</button>
                 <button type="button" style="display: none">Reset</button>
+                <button type="button" onclick="setTimeout(() => this.after('Copied'), 100)">Copy</button>
             </form>
         </body>
         </html>

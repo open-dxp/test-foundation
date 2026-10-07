@@ -224,6 +224,19 @@ final readonly class Page
     }
 
     /**
+     * Waits in the browser until the page shows the text, like a message a script adds after it heard from the server.
+     */
+    public function waitForText(string $text): self
+    {
+        $this->playwright()
+            ->locator(sprintf('text=%s', json_encode($text)))
+            ->first()
+            ->waitFor(['state' => 'visible']);
+
+        return $this;
+    }
+
+    /**
      * Whether the browser shows the field a label names. Only a real browser knows what its styles hide.
      */
     public function isVisible(string $label): bool
