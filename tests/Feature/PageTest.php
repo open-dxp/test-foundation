@@ -71,6 +71,10 @@ it('sends what a person enters', function () {
         ]);
 });
 
+it('counts how often the page shows a text', function () {
+    expect(Page::open($this->path)->occurrences('passport'))->toBe(1);
+});
+
 it('finds a link by its text', function () {
     $page = Page::open($this->path);
 

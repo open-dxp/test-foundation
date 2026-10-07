@@ -184,6 +184,14 @@ final readonly class Page
         return str_contains(self::read($this->crawler()), $text);
     }
 
+    /**
+     * How often the page shows the text, like a help text that must not appear twice.
+     */
+    public function occurrences(string $text): int
+    {
+        return substr_count(self::read($this->crawler()), $text);
+    }
+
     public function hasLink(string $link): bool
     {
         return $this->links($this->crawler(), $link)->count() > 0;
