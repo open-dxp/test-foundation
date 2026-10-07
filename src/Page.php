@@ -411,12 +411,14 @@ final readonly class Page
 
     public function region(string $name): Crawler
     {
-        $region = $this->crawler()->filterXPath(sprintf(
-            '//*[@aria-label = "%1$s"'
+        $named = sprintf(
+            '*[@aria-label = "%1$s"'
             . ' or @aria-labelledby = //*[normalize-space() = "%1$s"]/@id'
             . ' or self::fieldset[legend[normalize-space() = "%1$s"]]]',
             $name,
-        ));
+        );
+        // A fieldset its legend names and a group inside it that the legend labels are the same region.
+        $region = $this->crawler()->filterXPath(sprintf('//%1$s[not(descendant::%1$s)]', $named));
 
         if ($region->count() !== 1) {
             throw new LogicException(sprintf('The page has %d regions named "%s".', $region->count(), $name));
