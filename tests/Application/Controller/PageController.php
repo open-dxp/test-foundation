@@ -17,7 +17,7 @@ final class PageController extends FrontendController
             <nav aria-label="Main navigation"><a href="/">Home</a></nav>
             <form method="post">
                 <label for="name">Name</label>
-                <input id="name" name="name" value="Ada" aria-describedby="name_help">
+                <input id="name" name="name" value="Ada" aria-describedby="name_help" required>
                 <small id="name_help">As it stands in your passport</small>
                 <label for="message">Message</label>
                 <textarea id="message" name="message">Hello</textarea>
@@ -47,6 +47,8 @@ final class PageController extends FrontendController
                     <input type="checkbox" id="extras_gift" name="extras[]" value="gift">
                     <label for="extras_gift">Gift</label>
                 </fieldset>
+                <label for="code">Code</label>
+                <input id="code" name="code" disabled>
                 <label for="secret">Secret</label>
                 <input id="secret" name="secret" style="display: none">
                 <label for="birthday">Birthday</label>

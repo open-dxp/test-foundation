@@ -324,6 +324,16 @@ final readonly class Page
         return $field->attr('checked') !== null;
     }
 
+    public function isRequired(string $label): bool
+    {
+        return $this->field($label)->attr('required') !== null;
+    }
+
+    public function isDisabled(string $label): bool
+    {
+        return $this->field($label)->attr('disabled') !== null;
+    }
+
     /**
      * @return list<string> the text of every option of a list, in the order the list shows them
      */
@@ -339,7 +349,16 @@ final readonly class Page
      */
     public function selected(string $label): array
     {
-        return $this->findField('select', $label, $this->crawler())
+        $field = $this->findField('select', $label, $this->crawler());
+
+        // A browser keeps the options a person selected in the element, not in their attributes.
+        if ($this->browser instanceof PlaywrightBrowser) {
+            return $this->located($field)->evaluate(
+                'list => Array.from(list.selectedOptions, option => option.text.trim())',
+            );
+        }
+
+        return $field
             ->filter('option[selected]')
             ->each(static fn (Crawler $option) => self::read($option));
     }

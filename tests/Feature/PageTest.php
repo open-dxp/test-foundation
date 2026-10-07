@@ -30,6 +30,7 @@ it('reads the fields of a form by their labels', function () {
             'Large',
             'Bag',
             'Gift',
+            'Code',
             'Secret',
             'Birthday',
         ])
@@ -41,6 +42,19 @@ it('reads the fields of a form by their labels', function () {
         ->toBeTrue()
         ->and($page->description('Name'))
         ->toBe('As it stands in your passport');
+});
+
+it('tells whether a field is required or disabled', function () {
+    $page = Page::open($this->path);
+
+    expect($page->isRequired('Name'))
+        ->toBeTrue()
+        ->and($page->isRequired('Message'))
+        ->toBeFalse()
+        ->and($page->isDisabled('Code'))
+        ->toBeTrue()
+        ->and($page->isDisabled('Name'))
+        ->toBeFalse();
 });
 
 it('reads the options of a list', function () {

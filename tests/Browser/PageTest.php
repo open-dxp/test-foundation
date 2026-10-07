@@ -29,3 +29,9 @@ it('presses a key in the browser', function () {
 
     expect($page->value('Name'))->toBe('Grace');
 });
+
+it('reads what a person selects in the browser', function () {
+    $page = Page::inBrowser($this->path)->selectEach('Toppings', 'Cheese', 'Ham');
+
+    expect($page->selected('Toppings'))->toBe(['Cheese', 'Ham']);
+});
