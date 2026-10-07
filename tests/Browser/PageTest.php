@@ -46,7 +46,7 @@ it('tells whether the browser shows a button', function (string $button, bool $s
 it('waits until the page shows a text a script adds later', function () {
     $page = Page::inBrowser($this->path)
         ->press('Copy')
-        ->waitForText('Copied');
+        ->waitForText('Copi');
 
     expect($page->shows('Copied'))->toBeTrue();
 });

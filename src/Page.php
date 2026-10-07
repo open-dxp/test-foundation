@@ -229,7 +229,7 @@ final readonly class Page
     public function waitForText(string $text): self
     {
         $this->playwright()
-            ->locator(sprintf('text=%s', json_encode($text)))
+            ->getByText($text)
             ->first()
             ->waitFor(['state' => 'visible']);
 
