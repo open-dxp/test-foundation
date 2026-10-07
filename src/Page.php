@@ -85,7 +85,7 @@ final readonly class Page
 
     public function fillIn(string $label, string|int $value): self
     {
-        return $this->fillField($this->field('input|textarea', $label, $this->crawler()), $value);
+        return $this->fillField($this->findField('input|textarea', $label, $this->crawler()), $value);
     }
 
     /**
@@ -93,7 +93,7 @@ final readonly class Page
      */
     public function fillInWithin(string $region, string $label, string|int $value): self
     {
-        return $this->fillField($this->field('input|textarea', $label, $this->region($region)), $value);
+        return $this->fillField($this->findField('input|textarea', $label, $this->region($region)), $value);
     }
 
     /**
@@ -101,12 +101,12 @@ final readonly class Page
      */
     public function select(string $label, string $option): self
     {
-        return $this->selectOptions($this->field('select', $label, $this->crawler()), $label, $option);
+        return $this->selectOptions($this->findField('select', $label, $this->crawler()), $label, $option);
     }
 
     public function selectWithin(string $region, string $label, string $option): self
     {
-        return $this->selectOptions($this->field('select', $label, $this->region($region)), $label, $option);
+        return $this->selectOptions($this->findField('select', $label, $this->region($region)), $label, $option);
     }
 
     /**
@@ -114,7 +114,7 @@ final readonly class Page
      */
     public function selectEach(string $label, string ...$options): self
     {
-        return $this->selectOptions($this->field('select', $label, $this->crawler()), $label, ...$options);
+        return $this->selectOptions($this->findField('select', $label, $this->crawler()), $label, ...$options);
     }
 
     /**
@@ -135,7 +135,7 @@ final readonly class Page
 
     public function check(string $label): self
     {
-        $field = $this->field('input', $label, $this->crawler());
+        $field = $this->findField('input', $label, $this->crawler());
         $name = (string) $field->attr('name');
 
         if ($field->attr('type') === 'radio') {
@@ -201,14 +201,14 @@ final readonly class Page
 
     public function value(string $label): string
     {
-        $field = $this->field('input|textarea', $label, $this->crawler());
+        $field = $this->findField('input|textarea', $label, $this->crawler());
 
         return $field->nodeName() === 'textarea' ? $field->text() : (string) $field->attr('value');
     }
 
     public function isChecked(string $label): bool
     {
-        return $this->field('input', $label, $this->crawler())->attr('checked') !== null;
+        return $this->findField('input', $label, $this->crawler())->attr('checked') !== null;
     }
 
     /**
@@ -216,7 +216,7 @@ final readonly class Page
      */
     public function options(string $label): array
     {
-        return $this->field('select', $label, $this->crawler())
+        return $this->findField('select', $label, $this->crawler())
             ->filter('option')
             ->each(static fn (Crawler $option) => self::read($option));
     }
@@ -226,7 +226,7 @@ final readonly class Page
      */
     public function selected(string $label): array
     {
-        return $this->field('select', $label, $this->crawler())
+        return $this->findField('select', $label, $this->crawler())
             ->filter('option[selected]')
             ->each(static fn (Crawler $option) => self::read($option));
     }
@@ -238,7 +238,7 @@ final readonly class Page
     {
         $groups = [];
 
-        foreach ($this->field('select', $label, $this->crawler())->filter('optgroup') as $group) {
+        foreach ($this->findField('select', $label, $this->crawler())->filter('optgroup') as $group) {
             $groups[(string) $group->getAttribute('label')] = (new Crawler($group))
                 ->filter('option')
                 ->each(static fn (Crawler $option) => self::read($option));
@@ -252,7 +252,7 @@ final readonly class Page
      */
     public function description(string $label): string
     {
-        $described = (string) $this->field('*', $label, $this->crawler())->attr('aria-describedby');
+        $described = (string) $this->findField('*', $label, $this->crawler())->attr('aria-describedby');
         $ids = array_filter(explode(' ', $described));
 
         return implode(' ', array_map(
@@ -286,6 +286,14 @@ final readonly class Page
         return $this->region($region)
             ->filter('li')
             ->each(static fn (Crawler $item) => self::read($item));
+    }
+
+    /**
+     * The element a label names, for a page object that reads what this class does not.
+     */
+    public function field(string $label): Crawler
+    {
+        return $this->findField('*', $label, $this->crawler());
     }
 
     public function region(string $name): Crawler
@@ -331,7 +339,7 @@ final readonly class Page
      *
      * @param string $elements the names of the elements it may be, like "input|textarea", or "*" for any
      */
-    private function field(string $elements, string $label, Crawler $scope): Crawler
+    private function findField(string $elements, string $label, Crawler $scope): Crawler
     {
         $names = implode(' or ', array_map(
             static fn (string $element): string => $element === '*' ? 'true()' : sprintf('self::%s', $element),
@@ -359,7 +367,7 @@ final readonly class Page
 
     private function part(string $element, string $label, string $part): Crawler
     {
-        $input = $this->field('*', $label, $this->crawler())->filterXPath(sprintf(
+        $input = $this->findField('*', $label, $this->crawler())->filterXPath(sprintf(
             'descendant::%s[substring(@name, string-length(@name) - %d) = "[%s]"]',
             $element,
             strlen($part) + 1,
