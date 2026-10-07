@@ -40,10 +40,15 @@ final class PageController extends FrontendController
                     <label><input type="radio" name="size" value="s"> Small</label>
                     <label><input type="radio" name="size" value="l"> Large</label>
                 </fieldset>
-                <input type="checkbox" id="extras_bag" name="extras[]" value="bag">
-                <label for="extras_bag">Bag</label>
-                <input type="checkbox" id="extras_gift" name="extras[]" value="gift">
-                <label for="extras_gift">Gift</label>
+                <fieldset>
+                    <legend>Extras</legend>
+                    <input type="checkbox" id="extras_bag" name="extras[]" value="bag">
+                    <label for="extras_bag">Bag</label>
+                    <input type="checkbox" id="extras_gift" name="extras[]" value="gift">
+                    <label for="extras_gift">Gift</label>
+                </fieldset>
+                <label for="secret">Secret</label>
+                <input id="secret" name="secret" style="display: none">
                 <label for="birthday">Birthday</label>
                 <div id="birthday">
                     <select name="birthday[month]"><option value="5">May</option><option value="6">Jun</option></select>

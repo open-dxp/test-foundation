@@ -6,6 +6,7 @@ namespace OpenDxp\TestFoundation;
 
 use LogicException;
 use OpenDxp\TestFoundation\Browser as Browsers;
+use Playwright\Locator\LocatorInterface;
 use Playwright\Page\PageInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Browser;
@@ -185,6 +186,40 @@ final readonly class Page
     }
 
     /**
+     * Checks a choice in the region, where a form uses the label of the choice twice.
+     */
+    public function checkWithin(string $region, string $label): self
+    {
+        $field = $this->findField('input', $label, $this->region($region));
+
+        if ($field->attr('type') === 'radio') {
+            $this->browser->selectFieldOption((string) $field->attr('name'), (string) $field->attr('value'));
+        } else {
+            $this->browser->checkField((string) ($field->attr('id') ?? $field->attr('name')));
+        }
+
+        return $this;
+    }
+
+    /**
+     * Presses a key in the browser, like Tab to leave a field, which a script may react to.
+     */
+    public function pressKey(string $key): self
+    {
+        $this->playwright()->keyboard()->press($key);
+
+        return $this;
+    }
+
+    /**
+     * Whether the browser shows the field a label names. Only a real browser knows what its styles hide.
+     */
+    public function isVisible(string $label): bool
+    {
+        return $this->located($this->field($label))->isVisible();
+    }
+
+    /**
      * Checks the choice whose label wraps it, in a group of choices the region names.
      */
     public function pick(string $region, string $choice): self
@@ -258,12 +293,23 @@ final readonly class Page
     {
         $field = $this->findField('input|textarea', $label, $this->crawler());
 
+        // A browser keeps what a person typed in the element, not in its attribute.
+        if ($this->browser instanceof PlaywrightBrowser) {
+            return $this->located($field)->inputValue();
+        }
+
         return $field->nodeName() === 'textarea' ? $field->text() : (string) $field->attr('value');
     }
 
     public function isChecked(string $label): bool
     {
-        return $this->findField('input', $label, $this->crawler())->attr('checked') !== null;
+        $field = $this->findField('input', $label, $this->crawler());
+
+        if ($this->browser instanceof PlaywrightBrowser) {
+            return $this->located($field)->isChecked();
+        }
+
+        return $field->attr('checked') !== null;
     }
 
     /**
@@ -418,6 +464,11 @@ final readonly class Page
         }
 
         return $field;
+    }
+
+    private function located(Crawler $field): LocatorInterface
+    {
+        return $this->playwright()->locator(sprintf('[id="%s"]', $field->attr('id')));
     }
 
     private function part(string $element, string $label, string $part): Crawler
