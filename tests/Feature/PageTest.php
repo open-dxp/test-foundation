@@ -52,8 +52,8 @@ it('sends what a person enters', function () {
         ->select('Color', 'Red')
         ->selectEach('Toppings', 'Cheese', 'Olives')
         ->pick('Size', 'Large')
-        ->selectPart('Birthday', 'month', 'Jun')
-        ->fillInPart('Birthday', 'year', 1983);
+        ->selectParts('Birthday', ['month' => 'Jun'])
+        ->fillInParts('Birthday', ['year' => 1983]);
 
     $page->press('Send');
 

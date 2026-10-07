@@ -118,6 +118,46 @@ final readonly class Page
     }
 
     /**
+     * Checks every choice of a group of checkboxes that carries one of these labels.
+     */
+    public function checkEach(string ...$labels): self
+    {
+        foreach ($labels as $label) {
+            $this->check($label);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Fills in several inputs of a field made of several, by the name of each part.
+     *
+     * @param array<string, string|int> $values
+     */
+    public function fillInParts(string $label, array $values): self
+    {
+        foreach ($values as $part => $value) {
+            $this->fillInPart($label, $part, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Selects in several lists of a field made of several, by the name of each part.
+     *
+     * @param array<string, string> $options
+     */
+    public function selectParts(string $label, array $options): self
+    {
+        foreach ($options as $part => $option) {
+            $this->selectPart($label, $part, $option);
+        }
+
+        return $this;
+    }
+
+    /**
      * Fills in one input of a field made of several, like the year of a date, by the name of the part.
      */
     public function fillInPart(string $label, string $part, string|int $value): self
