@@ -181,7 +181,8 @@ final readonly class Page
         if ($field->attr('type') === 'radio') {
             $this->browser->selectFieldOption($name, (string) $field->attr('value'));
         } else {
-            $this->browser->checkField($name);
+            // The checkboxes of a group share their name, only the id tells them apart.
+            $this->browser->checkField((string) ($field->attr('id') ?? $name));
         }
 
         return $this;
