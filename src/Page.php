@@ -64,14 +64,10 @@ final readonly class Page
         ));
 
         if ($buttons->count() === 0) {
-            $names = $this->crawler()->filter('button, input[type="submit"]')->each(
-                static fn (Crawler $element) => self::read($element) ?: (string) $element->attr('value'),
-            );
-
             throw new LogicException(sprintf(
                 'There is no button "%s". The buttons are: %s',
                 $button,
-                implode(', ', $names),
+                implode(', ', $this->buttons()),
             ));
         }
 
@@ -231,6 +227,16 @@ final readonly class Page
     public function occurrences(string $text): int
     {
         return substr_count(self::read($this->crawler()), $text);
+    }
+
+    /**
+     * @return list<string> the text of every button on the page
+     */
+    public function buttons(): array
+    {
+        return $this->crawler()
+            ->filter('button, input[type="submit"]')
+            ->each(static fn (Crawler $button) => self::read($button) ?: (string) $button->attr('value'));
     }
 
     public function hasLink(string $link): bool
