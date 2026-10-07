@@ -1,0 +1,5 @@
+services:
+    OpenDxp\TestFoundation\Tests\Application\Controller\PageController:
+        autowire: true
+        autoconfigure: true
+        tags: ['controller.service_arguments']
