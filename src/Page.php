@@ -9,6 +9,7 @@ use OpenDxp\TestFoundation\Browser as Browsers;
 use Playwright\Locator\LocatorInterface;
 use Playwright\Page\PageInterface;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpFoundation\Response;
 use Zenstruck\Browser;
 use Zenstruck\Browser\KernelBrowser;
 use Zenstruck\Browser\PlaywrightBrowser;
@@ -604,13 +605,19 @@ final readonly class Page
     }
 
     /**
-     * Only the kernel tells the status of a response.
+     * Only the kernel tells the status of a response. A rejected form answers 422 with its errors.
      */
     private function succeeded(Browser $browser): void
     {
-        if ($browser instanceof KernelBrowser) {
-            $browser->assertSuccessful();
+        if (!$browser instanceof KernelBrowser) {
+            return;
         }
+
+        if ($browser->client()->getResponse()->getStatusCode() === Response::HTTP_UNPROCESSABLE_ENTITY) {
+            return;
+        }
+
+        $browser->assertSuccessful();
     }
 
     private function follow(Crawler $link): self

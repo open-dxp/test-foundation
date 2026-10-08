@@ -100,6 +100,14 @@ it('sends what a person enters', function () {
         ]);
 });
 
+it('reads the errors of a form the server rejects', function () {
+    $page = Page::open($this->path)->fillIn('Name', '');
+
+    $page->press('Send');
+
+    expect($page->shows('Please enter your name.'))->toBeTrue();
+});
+
 it('counts how often the page shows a text', function () {
     expect(Page::open($this->path)->occurrences('passport'))->toBe(1);
 });
