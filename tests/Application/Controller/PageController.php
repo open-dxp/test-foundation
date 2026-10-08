@@ -64,10 +64,23 @@ final class PageController extends FrontendController
         </html>
         HTML;
 
+    private const string REJECTED = <<<'HTML'
+        <!doctype html>
+        <html lang="en">
+        <body>
+            <p>Please enter your name.</p>
+        </body>
+        </html>
+        HTML;
+
     public function formAction(Request $request): Response
     {
         if (!$request->isMethod('POST')) {
             return new Response(self::FORM);
+        }
+
+        if ($request->request->get('name') === '') {
+            return new Response(self::REJECTED, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $sent = '';
