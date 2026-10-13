@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en">
+<body>
+    <div role="status">Thank you</div>
+    <ul aria-label="Sent">
+        {% for name, value in sent %}
+            <li>{{ name }}: {{ value is iterable ? value|join(', ') : value }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
