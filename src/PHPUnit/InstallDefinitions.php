@@ -12,11 +12,11 @@ use PHPUnit\Runner\Extension\Extension;
 use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
 use PHPUnit\TextUI\Configuration\Configuration;
-use RuntimeException;
-use Symfony\Component\HttpKernel\KernelInterface;
 
 final class InstallDefinitions implements Extension
 {
+    use BootKernelTrait;
+
     private const string DEFAULT_DIRECTORY = 'tests/Fixtures';
 
     // Classes refer to classification stores and field collections, and object bricks refer to classes.
@@ -47,7 +47,7 @@ final class InstallDefinitions implements Extension
             return;
         }
 
-        $kernel = self::boot();
+        $kernel = self::bootKernel();
 
         foreach (self::DEFINITIONS as $kind => $installer) {
             foreach ($found[$kind] as $definition) {
@@ -56,22 +56,5 @@ final class InstallDefinitions implements Extension
         }
 
         $kernel->shutdown();
-    }
-
-    private static function boot(): KernelInterface
-    {
-        $class = $_ENV['KERNEL_CLASS'] ?? $_SERVER['KERNEL_CLASS'] ?? getenv('KERNEL_CLASS');
-
-        if (!is_string($class) || !class_exists($class)) {
-            throw new RuntimeException(
-                'KERNEL_CLASS names no kernel, so the class definitions cannot be installed. '
-                . 'It is set in the <php> section of phpunit.xml.',
-            );
-        }
-
-        $kernel = new $class('test', true);
-        $kernel->boot();
-
-        return $kernel;
     }
 }
