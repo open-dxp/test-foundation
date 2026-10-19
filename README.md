@@ -14,9 +14,9 @@ transaction comes from [DAMADoctrineTestBundle](https://github.com/dmaicher/doct
 [Testing][testing] in the documentation of OpenDXP describes how you write tests. It also describes
 the test API of OpenDXP with its factories and expectations.
 
-[testing]: https://github.com/open-dxp/opendxp/blob/1.x/doc/19_Development_Tools_and_Details/29_Testing/README.md
-[writing-tests]: https://github.com/open-dxp/opendxp/blob/1.x/doc/19_Development_Tools_and_Details/29_Testing/03_Writing_Tests.md
-[factories]: https://github.com/open-dxp/opendxp/blob/1.x/doc/19_Development_Tools_and_Details/29_Testing/05_Factories_and_Stories.md
+[testing]: https://docs.opendxp.io/docs/core-framework/next/Development_Tools_and_Details/Testing/
+[writing-tests]: https://docs.opendxp.io/docs/core-framework/next/Development_Tools_and_Details/Testing/Writing_Tests/
+[factories]: https://docs.opendxp.io/docs/core-framework/next/Development_Tools_and_Details/Testing/Factories_and_Stories/
 [testkit]: https://github.com/open-dxp/docker-testkit
 [workflows]: https://github.com/open-dxp/workflows-collection-public
 
