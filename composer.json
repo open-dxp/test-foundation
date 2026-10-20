@@ -41,6 +41,9 @@
         "app-template": "app",
         "branch-alias": {
             "dev-1.x": "1.2.x-dev"
+        },
+        "ai-mate": {
+            "skills": ["skills"]
         }
     },
     "minimum-stability": "stable"
