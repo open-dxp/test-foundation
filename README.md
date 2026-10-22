@@ -167,7 +167,16 @@ testkit test
 
 ### Without the testkit
 
-You need PHP and an empty database:
+A project runs its tests in its own environment. `DATABASE_URL` in `.env.test` or
+`.env.test.local` names an empty database:
+
+```bash
+APP_ENV=test vendor/bin/opendxp-test install
+APP_ENV=test vendor/bin/pest
+APP_ENV=test vendor/bin/opendxp-test analyse .
+```
+
+A bundle has no application of its own. You need PHP and an empty database:
 
 ```bash
 mysql -e "CREATE DATABASE blog_tests"
