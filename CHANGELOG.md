@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.2
+- [BUGFIX] The pages of a project render through its own default controller instead of the controller of the foundation
+
 ## 1.2.1
 - [CHORE] Use docs.opendxp.io URIs
 - [ENHANCEMENT] Ship the test skill through Mate
