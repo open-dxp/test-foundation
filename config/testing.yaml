@@ -28,9 +28,6 @@ opendxp:
             options:
                 cost: 4
 
-    documents:
-        default_controller: 'OpenDxp\TestFoundation\Controller\DefaultController::defaultAction'
-
     email:
         debug:
             # Tests run in debug mode, where OpenDXP sends every mail to this address instead of its recipients.

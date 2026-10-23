@@ -11,6 +11,7 @@ use OpenDxp\Bundle\StaticRoutesBundle\OpenDxpStaticRoutesBundle;
 use OpenDxp\HttpKernel\BundleCollection\BundleCollection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\DisableCsrfProtection;
 use OpenDxp\TestFoundation\Kernel\CompilerPass\MakeServicesPublic;
+use OpenDxp\TestFoundation\Kernel\CompilerPass\UseFoundationControllerWithoutApplication;
 use OpenDxp\TestFoundation\GeoIp;
 use Composer\InstalledVersions;
 use ReflectionClass;
@@ -53,9 +54,8 @@ trait Testable
 
         $beside = dirname((new ReflectionClass(static::class))->getFileName());
 
-        // Symfony accepts new firewalls only from the first file that names any. A bundle that needs a firewall of its
-        // own, like a frontend login, therefore lists all firewalls in this file, and it is loaded before the
-        // application's.
+        // Symfony accepts new firewalls only from the first file that names any. A bundle that needs a firewall of its own,
+        // like a frontend login, therefore lists all firewalls in this file, and it is loaded before the application's.
         $security = $beside . '/config/security.yaml';
 
         $loader->load(static function (ContainerBuilder $container) use ($security): void {
@@ -107,6 +107,7 @@ trait Testable
     protected function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new DisableCsrfProtection());
+        $container->addCompilerPass(new UseFoundationControllerWithoutApplication());
 
         $container->addCompilerPass(
             new MakeServicesPublic($this->directoriesUnderTest()),
@@ -126,8 +127,8 @@ trait Testable
     }
 
     /**
-     * A bundle is tested inside an application that `opendxp-test bundle` builds and names it in. A project is the
-     * application.
+     * A bundle is tested inside an application that `opendxp-test bundle` builds and names it in.
+     * A project is the application.
      */
     private function packageUnderTest(): string
     {
