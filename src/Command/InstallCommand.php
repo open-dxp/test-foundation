@@ -59,7 +59,7 @@ final class InstallCommand extends Command
         while ($bundles = array_diff($this->findUninstalledBundles($application, $environment), $installed)) {
             foreach ($bundles as $bundle) {
                 $output->writeln('Installing ' . $bundle);
-                $runner->mustRun($application->consoleCommand('opendxp:bundle:install', $bundle, '--no-post-change-commands', '-q'), $environment);
+                $runner->mustRun($application->consoleCommand('opendxp:bundle:install', $bundle, '--no-post-change-commands'), $environment);
                 $installed[] = $bundle;
             }
         }

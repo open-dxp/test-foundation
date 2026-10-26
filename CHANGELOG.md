@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.4
+- [BUGFIX] `opendxp-test install` shows why the installer of a bundle failed
+
 ## 1.2.3
 - [ENHANCEMENT] The test skill lists the rules for writing and reviewing tests
 
