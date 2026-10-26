@@ -6,6 +6,7 @@ namespace OpenDxp\TestFoundation\Command;
 
 use OpenDxp\TestFoundation\Application\EnvironmentFile;
 use OpenDxp\TestFoundation\Application\ProcessRunner;
+use OpenDxp\TestFoundation\Application\ProjectDefinitions;
 use OpenDxp\TestFoundation\Application\TestApplication;
 use OpenDxp\TestFoundation\Dto\DatabaseConnection;
 use RuntimeException;
@@ -38,6 +39,9 @@ final class InstallCommand extends Command
         // Without debug, a command does not compile the container again after a bundle install changed the configuration.
         $environment = [...$application->consoleEnvironment(), 'APP_DEBUG' => '0'];
 
+        // The installers write the definitions they ship over the ones a project changed.
+        $projectDefinitions = $application->isProject() ? ProjectDefinitions::capture($application->directory) : null;
+
         $output->writeln('Installing OpenDXP');
         $runner->mustRun($application->vendorBinaryCommand(
             'opendxp-install',
@@ -63,6 +67,8 @@ final class InstallCommand extends Command
                 $installed[] = $bundle;
             }
         }
+
+        $projectDefinitions?->restore();
 
         // An installer that skips parent::install() leaves its bundle installable, and one that does not mark its
         // migrations leaves them to run on top of the state it already built.

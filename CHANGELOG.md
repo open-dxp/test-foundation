@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.5
+- [BUGFIX] `opendxp-test install` keeps the definitions of the data object classes, field collections and object bricks of a project
+
 ## 1.2.4
 - [BUGFIX] `opendxp-test install` shows why the installer of a bundle failed
 

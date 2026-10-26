@@ -53,8 +53,7 @@ final readonly class TestApplication
      */
     public function migrationNamespacesOfPackageUnderTest(): array
     {
-        $manifest = json_decode((string) file_get_contents($this->directory . '/composer.json'), true);
-        $package = $manifest['extra']['opendxp-test']['package'] ?? null;
+        $package = $this->packageUnderTest();
 
         if ($package === null) {
             return [];
@@ -72,6 +71,11 @@ final readonly class TestApplication
         }
 
         return array_keys($namespaces);
+    }
+
+    public function isProject(): bool
+    {
+        return $this->packageUnderTest() === null;
     }
 
     /**
@@ -101,5 +105,12 @@ final readonly class TestApplication
     public function vendorBinaryCommand(string $binary, string ...$arguments): array
     {
         return [PHP_BINARY, 'vendor/bin/' . $binary, ...array_values($arguments)];
+    }
+
+    private function packageUnderTest(): ?string
+    {
+        $manifest = json_decode((string) file_get_contents($this->directory . '/composer.json'), true);
+
+        return $manifest['extra']['opendxp-test']['package'] ?? null;
     }
 }
