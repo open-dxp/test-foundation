@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.3
+- [ENHANCEMENT] The test skill lists the rules for writing and reviewing tests
+
 ## 1.2.2
 - [BUGFIX] The pages of a project render through its own default controller instead of the controller of the foundation
 
