@@ -1,0 +1,6 @@
+imports:
+    - { resource: test.yaml }
+
+opendxp:
+    general:
+        domain: 'environment.test'
