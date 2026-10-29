@@ -40,6 +40,9 @@ abstract class TestCase extends KernelTestCase
     {
         parent::setUp();
 
+        // A kernel of another environment may have filled the static before this test.
+        Config::setSystemConfiguration(null);
+
         self::bootKernel();
 
         // OpenDXP sets its configured timezone in Bootstrap::kernel(), which a test does not go through.

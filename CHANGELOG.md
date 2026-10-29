@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.6
+- [BUGFIX] The first test of an environment reads the system configuration of that environment
+
 ## 1.2.5
 - [BUGFIX] `opendxp-test install` keeps the definitions of the data object classes, field collections and object bricks of a project
 
