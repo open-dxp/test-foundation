@@ -12,6 +12,7 @@ use PHPUnit\Runner\Extension\Extension;
 use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
 use PHPUnit\TextUI\Configuration\Configuration;
+use ReflectionClass;
 
 final class InstallDefinitions implements Extension
 {
@@ -33,14 +34,22 @@ final class InstallDefinitions implements Extension
         Facade $facade,
         ParameterCollection $parameters,
     ): void {
-        $directory = $parameters->has('directory')
-            ? $parameters->get('directory')
-            : self::DEFAULT_DIRECTORY;
+        $directories = [
+            $parameters->has('directory') ? $parameters->get('directory') : self::DEFAULT_DIRECTORY,
+        ];
+
+        if ($parameters->has('opendxp-definitions') && $parameters->get('opendxp-definitions') === 'true') {
+            array_unshift($directories, self::openDxpDirectory());
+        }
 
         $found = [];
 
         foreach (self::DEFINITIONS as $kind => $installer) {
-            $found[$kind] = glob(sprintf('%s/%s/*.json', $directory, $kind)) ?: [];
+            $found[$kind] = [];
+
+            foreach ($directories as $directory) {
+                $found[$kind] = array_merge($found[$kind], glob(sprintf('%s/%s/*.json', $directory, $kind)) ?: []);
+            }
         }
 
         if ($found === array_fill_keys(array_keys(self::DEFINITIONS), [])) {
@@ -56,5 +65,12 @@ final class InstallDefinitions implements Extension
         }
 
         $kernel->shutdown();
+    }
+
+    private static function openDxpDirectory(): string
+    {
+        $file = (new ReflectionClass(ClassDefinitions::class))->getFileName();
+
+        return sprintf('%s/Fixtures', dirname((string) $file));
     }
 }

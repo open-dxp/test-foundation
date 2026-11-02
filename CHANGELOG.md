@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.7
+- [NEW FEATURE] `InstallDefinitions` installs the definitions OpenDXP ships for tests when the parameter `opendxp-definitions` is `true`
+
 ## 1.2.6
 - [BUGFIX] The first test of an environment reads the system configuration of that environment
 

@@ -354,6 +354,16 @@ The extension reads `tests/Fixtures` unless you name another directory:
 </bootstrap>
 ```
 
+OpenDXP ships definitions for tests in `OpenDxp\Test`: data object classes, an object brick, a
+field collection and a classification store. Each class has a factory in `OpenDxp\Test\Factory`.
+The extension installs these definitions before your own when you ask for them:
+
+```xml
+<bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallDefinitions">
+    <parameter name="opendxp-definitions" value="true"/>
+</bootstrap>
+```
+
 A project keeps its classes in `var/classes`, and `opendxp-test install` creates them from there.
 
 ### Install something else before the first test
