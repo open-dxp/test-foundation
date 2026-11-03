@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace OpenDxp\TestFoundation\Application;
 
 use Composer\InstalledVersions;
+use DOMXPath;
 use RuntimeException;
+use Symfony\Component\Config\Util\XmlUtils;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Finder\Finder;
 
 final readonly class TestApplication
 {
@@ -19,9 +24,10 @@ final readonly class TestApplication
     public static function fromWorkingDirectory(): self
     {
         $directory = self::workingDirectory();
+        $environmentFile = Path::join($directory, '.env');
 
-        if (is_file($directory . '/.env')) {
-            (new Dotenv())->loadEnv($directory . '/.env');
+        if ((new Filesystem())->exists($environmentFile)) {
+            (new Dotenv())->loadEnv($environmentFile);
         }
 
         return new self($directory, self::readKernelClass($directory));
@@ -34,11 +40,20 @@ final readonly class TestApplication
 
     public static function readKernelClass(string $directory): string
     {
-        foreach (['phpunit.xml', 'phpunit.xml.dist'] as $file) {
-            $configuration = $directory . '/' . $file;
+        $filesystem = new Filesystem();
 
-            if (is_file($configuration) && preg_match('/name="KERNEL_CLASS" value="([^"]+)"/', (string) file_get_contents($configuration), $match)) {
-                return $match[1];
+        foreach (['phpunit.xml', 'phpunit.xml.dist'] as $file) {
+            $configuration = Path::join($directory, $file);
+
+            if (!$filesystem->exists($configuration)) {
+                continue;
+            }
+
+            $kernelClass = (new DOMXPath(XmlUtils::loadFile($configuration)))
+                ->evaluate('string(/phpunit/php/*[@name="KERNEL_CLASS"]/@value)');
+
+            if (is_string($kernelClass) && $kernelClass !== '') {
+                return $kernelClass;
             }
         }
 
@@ -62,10 +77,25 @@ final readonly class TestApplication
         $directory = InstalledVersions::getInstallPath($package)
             ?? throw new RuntimeException(sprintf('The package under test %s is not installed.', $package));
 
+        $sources = array_filter(
+            [Path::join($directory, 'src'), Path::join($directory, 'lib')],
+            (new Filesystem())->exists(...),
+        );
+
+        if ($sources === []) {
+            return [];
+        }
+
+        $migrations = Finder::create()
+            ->files()
+            ->in($sources)
+            ->depth('<= 3')
+            ->path('#(^|/)Migrations/Version[^/]*\.php$#');
+
         $namespaces = [];
 
-        foreach (glob($directory . '/{src,lib}/{,*/,*/*/}Migrations/Version*.php', GLOB_BRACE) ?: [] as $migration) {
-            if (preg_match('/^namespace ([^;]+);/m', (string) file_get_contents($migration), $match)) {
+        foreach ($migrations as $migration) {
+            if (preg_match('/^namespace ([^;]+);/m', $migration->getContents(), $match)) {
                 $namespaces[$match[1]] = true;
             }
         }
@@ -109,7 +139,11 @@ final readonly class TestApplication
 
     private function packageUnderTest(): ?string
     {
-        $manifest = json_decode((string) file_get_contents($this->directory . '/composer.json'), true);
+        $manifest = json_decode(
+            (new Filesystem())->readFile(Path::join($this->directory, 'composer.json')),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
 
         return $manifest['extra']['opendxp-test']['package'] ?? null;
     }
