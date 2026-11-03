@@ -1,1 +1,2 @@
 /fixtures/geoip/build.py export-ignore
+/phpstan.neon export-ignore

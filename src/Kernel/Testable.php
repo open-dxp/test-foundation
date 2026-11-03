@@ -52,7 +52,9 @@ trait Testable
             $container->setParameter('opendxp.geoip.db_file', realpath(GeoIp::DATABASE));
         });
 
-        $beside = dirname((new ReflectionClass(static::class))->getFileName());
+        $kernelFile = (new ReflectionClass(static::class))->getFileName()
+            ?: throw new RuntimeException(sprintf('%s has no file.', static::class));
+        $beside = dirname($kernelFile);
 
         // Symfony accepts new firewalls only from the first file that names any. A bundle that needs a firewall of its own,
         // like a frontend login, therefore lists all firewalls in this file, and it is loaded before the application's.

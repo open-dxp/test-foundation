@@ -9,7 +9,10 @@ use DAMA\DoctrineTestBundle\Doctrine\DBAL\StaticDriver;
 use LogicException;
 use OpenDxp\Cache\RuntimeCache;
 use OpenDxp\Db;
+use RuntimeException;
 use Spatie\Fork\Fork;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\HttpKernel\RebootableInterface;
 
 final class Concurrency
 {
@@ -40,13 +43,16 @@ final class Concurrency
         // Fork collects the results in the order in which the processes finish.
         ksort($results);
 
-        return $results;
+        return array_values($results);
     }
 
     private static function startRequest(): void
     {
-        session_id(session_create_id());
+        session_id(session_create_id() ?: throw new RuntimeException('PHP cannot create a session id.'));
         RuntimeCache::clear();
-        Container::get('kernel')->reboot(null);
+
+        $kernel = Container::get(KernelInterface::class);
+        assert($kernel instanceof RebootableInterface);
+        $kernel->reboot(null);
     }
 }

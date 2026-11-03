@@ -10,6 +10,9 @@ abstract class EnvironmentTestCase extends TestCase
 {
     abstract protected static function environment(): string;
 
+    /**
+     * @param array<string, mixed> $options
+     */
     protected static function createKernel(array $options = []): KernelInterface
     {
         return parent::createKernel(['environment' => static::environment()] + $options);

@@ -102,19 +102,25 @@ final class BundleCommand extends Command
     }
 
     /**
-     * The tests are copied into the application, every other development path stays in the installed package.
+     * @param string|array<string> $paths
      *
-     * @param string|list<string> $paths
-     *
-     * @return string|list<string>
+     * @return string|array<string>
      */
     private function locateDevelopmentPaths(string|array $paths, string $package): string|array
     {
         if (is_array($paths)) {
-            return array_map(fn (string $path): string => $this->locateDevelopmentPaths($path, $package), $paths);
+            return array_map(fn (string $path): string => $this->locateDevelopmentPath($path, $package), $paths);
         }
 
-        return str_starts_with(trim($paths, './'), 'tests') ? $paths : sprintf('vendor/%s/%s', $package, ltrim($paths, './'));
+        return $this->locateDevelopmentPath($paths, $package);
+    }
+
+    /**
+     * The tests are copied into the application, every other development path stays in the installed package.
+     */
+    private function locateDevelopmentPath(string $path, string $package): string
+    {
+        return str_starts_with(trim($path, './'), 'tests') ? $path : sprintf('vendor/%s/%s', $package, ltrim($path, './'));
     }
 
     /**
