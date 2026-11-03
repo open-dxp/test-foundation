@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.9
+- [BUGFIX] A request through `Container::testClient()` is the main request, so OpenDXP reads its locale
+
 ## 1.2.8
 - [NEW FEATURE] `Concurrency::run()` tests race conditions with closures in parallel processes. See [Concurrency](README.md#concurrency)
 - [NEW FEATURE] `WithoutRollbackTestCase` restores a database snapshot instead of rolling back. See [Tests without rollback](README.md#tests-without-rollback)

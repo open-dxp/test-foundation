@@ -57,9 +57,6 @@ final class Browser
 
     public static function start(): KernelBrowser
     {
-        // Otherwise the kernel keeps the test case's request as the main one.
-        Container::requestStack()->pop();
-
         // Symfony hands out a new client for every call, and only a client that has already sent
         // something reboots the kernel between requests.
         self::$client ??= Container::testClient();

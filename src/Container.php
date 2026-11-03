@@ -54,6 +54,9 @@ final class Container
 
     public static function testClient(): KernelBrowser
     {
+        // Otherwise the kernel keeps the request of the test case as the main one.
+        self::requestStack()->pop();
+
         return self::container()->get('test.client');
     }
 
