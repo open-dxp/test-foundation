@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OpenDxp\TestFoundation;
 
 use Closure;
+use LogicException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -18,8 +19,8 @@ final class Container
     private static ?Closure $container = null;
 
     /**
-     * The container is asked for on every call rather than kept, because a request through the
-     * browser reboots the kernel and builds a new one.
+     * Sets the factory that returns the container. A request through the browser reboots the kernel and builds a new
+     * container, so the factory is called every time.
      *
      * @internal called by the test case once the kernel is up
      *
@@ -72,7 +73,7 @@ final class Container
 
     private static function container(): ContainerInterface
     {
-        return (self::$container ?? throw new \LogicException(
+        return (self::$container ?? throw new LogicException(
             'No application is running. A test reaching for a service must extend a test case of '
             . 'this package, which hands the container over when it boots.'
         ))();

@@ -14,10 +14,12 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 
 #[AsCommand(
     name: 'analyse',
-    description: 'Runs the static checks a package configures, against the installed application in the working directory.',
+    description: 'Runs the static checks of a package against the application in the working directory.',
 )]
 final class AnalyseCommand extends Command
 {
@@ -42,7 +44,12 @@ final class AnalyseCommand extends Command
                 'One of %s. All configured checks by default.',
                 implode(', ', [self::LINT, ...array_keys(self::TOOL_CONFIGURATION_FILES)]),
             ))
-            ->addOption('baseline', null, InputOption::VALUE_NONE, 'Write the PHPStan baseline beside phpstan.neon instead of reporting');
+            ->addOption(
+                'baseline',
+                null,
+                InputOption::VALUE_NONE,
+                'Write the PHPStan baseline beside phpstan.neon instead of reporting',
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -53,22 +60,19 @@ final class AnalyseCommand extends Command
             ?: throw new RuntimeException(sprintf('There is no package at %s.', $input->getArgument('package')));
 
         $toolConfigurations = $this->findToolConfigurations($application, $packageDirectory);
-        $failed = false;
-
         $writeBaseline = (bool) $input->getOption('baseline');
         $requestedCheck = $writeBaseline ? 'phpstan' : $input->getArgument('check');
+        $exitCodes = [self::SUCCESS];
 
         foreach ($this->selectChecks($toolConfigurations, $packageDirectory, $requestedCheck) as $check) {
             $output->writeln(sprintf('<info>%s</info>', $check));
 
-            $exitCode = $check === self::LINT
+            $exitCodes[] = $check === self::LINT
                 ? $this->runLint($runner, $application, $packageDirectory)
                 : $this->runTool($runner, $application, $check, $toolConfigurations[$check], $writeBaseline);
-
-            $failed = $failed || $exitCode !== 0;
         }
 
-        return $failed ? self::FAILURE : self::SUCCESS;
+        return max($exitCodes) === self::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 
     /**
@@ -109,57 +113,74 @@ final class AnalyseCommand extends Command
         }
 
         if (!isset($toolConfigurations[$requestedCheck])) {
-            throw new RuntimeException(sprintf('%s has no %s.', $packageDirectory, self::TOOL_CONFIGURATION_FILES[$requestedCheck]));
+            throw new RuntimeException(sprintf(
+                '%s has no %s.',
+                $packageDirectory,
+                self::TOOL_CONFIGURATION_FILES[$requestedCheck],
+            ));
         }
 
         return [$requestedCheck];
     }
 
     /**
-     * A project may keep the file beside its application or in any directory above, up to the repository root.
+     * Finds the file beside the application or in a directory above it, up to the root of the package.
      */
-    private function findConfigurationFile(TestApplication $application, string $packageDirectory, string $fileName): ?string
-    {
-        $isInsidePackage = str_starts_with($application->directory . '/', $packageDirectory . '/');
-        $directory = $isInsidePackage ? $application->directory : $packageDirectory;
+    private function findConfigurationFile(
+        TestApplication $application,
+        string $packageDirectory,
+        string $fileName,
+    ): ?string {
+        $filesystem = new Filesystem();
+        $directory = Path::isBasePath($packageDirectory, $application->directory)
+            ? $application->directory
+            : $packageDirectory;
 
         while (true) {
-            if (is_file($directory . '/' . $fileName)) {
-                return $directory . '/' . $fileName;
+            $configurationFile = Path::join($directory, $fileName);
+
+            if ($filesystem->exists($configurationFile)) {
+                return $configurationFile;
             }
 
             if ($directory === $packageDirectory) {
                 return null;
             }
 
-            $directory = dirname($directory);
+            $directory = Path::getDirectory($directory);
         }
     }
 
     private function runLint(ProcessRunner $runner, TestApplication $application, string $packageDirectory): int
     {
+        $filesystem = new Filesystem();
         $environment = $application->consoleEnvironment();
-        $exitCode = $runner->run($application->consoleCommand('lint:container'), $environment);
-        $exitCode = $runner->run($application->consoleCommand('lint:yaml', 'config'), $environment) ?: $exitCode;
+        $exitCodes = [
+            $runner->run($application->consoleCommand('lint:container'), $environment),
+            $runner->run($application->consoleCommand('lint:yaml', 'config'), $environment),
+        ];
 
         // A bundle cannot know where it will run, so only a project lints its templates where it is deployed.
         $twigOptions = $this->isBundle($application, $packageDirectory)
             ? []
             : ['--env=' . $this->findDeployedEnvironment($application), '--no-debug'];
 
-        foreach (['themes', 'templates', $packageDirectory . '/templates'] as $templateDirectory) {
-            if (is_dir($templateDirectory) || is_dir($application->directory . '/' . $templateDirectory)) {
-                $exitCode = $runner->run($application->consoleCommand('lint:twig', $templateDirectory, ...$twigOptions), $environment) ?: $exitCode;
+        foreach (['themes', 'templates', Path::join($packageDirectory, 'templates')] as $templateDirectory) {
+            if ($filesystem->exists(Path::makeAbsolute($templateDirectory, $application->directory))) {
+                $lintTwig = $application->consoleCommand('lint:twig', $templateDirectory, ...$twigOptions);
+                $exitCodes[] = $runner->run($lintTwig, $environment);
             }
         }
 
-        return $exitCode;
+        return max($exitCodes);
     }
 
     private function findDeployedEnvironment(TestApplication $application): string
     {
+        $filesystem = new Filesystem();
+
         foreach (self::DEPLOYED_ENVIRONMENTS as $environment) {
-            if (is_dir($application->directory . '/config/packages/' . $environment)) {
+            if ($filesystem->exists(Path::join($application->directory, 'config/packages', $environment))) {
                 return $environment;
             }
         }
@@ -169,19 +190,35 @@ final class AnalyseCommand extends Command
 
     private function isBundle(TestApplication $application, string $packageDirectory): bool
     {
-        if (!is_file($packageDirectory . '/composer.json')) {
+        $filesystem = new Filesystem();
+        $manifestFile = Path::join($packageDirectory, 'composer.json');
+
+        if (!$filesystem->exists($manifestFile)) {
             return false;
         }
 
-        $packageName = json_decode((string) file_get_contents($packageDirectory . '/composer.json'), true, flags: JSON_THROW_ON_ERROR)['name'] ?? '';
+        $manifest = json_decode($filesystem->readFile($manifestFile), true, flags: JSON_THROW_ON_ERROR);
+        $packageName = $manifest['name'] ?? '';
 
-        return $packageName !== '' && is_dir($application->directory . '/vendor/' . $packageName);
+        if ($packageName === '') {
+            return false;
+        }
+
+        return $filesystem->exists(Path::join($application->directory, 'vendor', $packageName));
     }
 
-    private function runTool(ProcessRunner $runner, TestApplication $application, string $tool, string $configurationFile, bool $writeBaseline): int
-    {
-        if (!is_file($application->directory . '/vendor/bin/' . $tool)) {
-            throw new RuntimeException(sprintf('%s is configured but not installed. The package requires it in require-dev.', $tool));
+    private function runTool(
+        ProcessRunner $runner,
+        TestApplication $application,
+        string $tool,
+        string $configurationFile,
+        bool $writeBaseline,
+    ): int {
+        if (!(new Filesystem())->exists(Path::join($application->directory, 'vendor/bin', $tool))) {
+            throw new RuntimeException(sprintf(
+                '%s is configured but not installed. The package requires it in require-dev.',
+                $tool,
+            ));
         }
 
         $environment = $application->consoleEnvironment();
@@ -191,13 +228,16 @@ final class AnalyseCommand extends Command
             $runner->mustRun($application->consoleCommand('cache:warmup', '-q'), [...$environment, 'APP_DEBUG' => '1']);
         }
 
-        $baselineArguments = $writeBaseline ? ['--generate-baseline=' . dirname($configurationFile) . '/phpstan-baseline.neon'] : [];
+        $baseline = Path::join(Path::getDirectory($configurationFile), 'phpstan-baseline.neon');
+        $baselineArguments = $writeBaseline ? ['--generate-baseline=' . $baseline] : [];
 
-        return $runner->run(match ($tool) {
-            'phpstan' => $application->vendorBinaryCommand('phpstan', 'analyse', '-c', $configurationFile, ...$baselineArguments),
-            'deptrac' => $application->vendorBinaryCommand('deptrac', 'analyse', '-c', $configurationFile),
-            'phparkitect' => $application->vendorBinaryCommand('phparkitect', 'check', '--config=' . $configurationFile),
+        $arguments = match ($tool) {
+            'phpstan' => ['analyse', '-c', $configurationFile, ...$baselineArguments],
+            'deptrac' => ['analyse', '-c', $configurationFile],
+            'phparkitect' => ['check', '--config=' . $configurationFile],
             default => throw new LogicException(sprintf('There is no tool called %s.', $tool)),
-        }, $environment);
+        };
+
+        return $runner->run($application->vendorBinaryCommand($tool, ...$arguments), $environment);
     }
 }

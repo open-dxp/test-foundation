@@ -14,8 +14,9 @@ final class Admin
     public const string FIREWALL = 'opendxp_admin';
 
     /**
-     * A service that asks which backend user is logged in is then handed this user, the same way a backend request
-     * would hand it one. A request through the browser names its user with Browser::actingAs() instead.
+     * Logs the user in for the services the test calls, the same way a backend request does.
+     *
+     * A request through the browser names its user with Browser::actingAs() instead.
      */
     public static function actingAs(User $user): void
     {

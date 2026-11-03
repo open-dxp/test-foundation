@@ -20,6 +20,8 @@ use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\FileExistenceResource;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 use DAMA\DoctrineTestBundle\DAMADoctrineTestBundle;
 use Playwright\Symfony\PlaywrightSymfonyBundle;
 use Zenstruck\Foundry\ZenstruckFoundryBundle;
@@ -52,44 +54,46 @@ trait Testable
             $container->setParameter('opendxp.geoip.db_file', realpath(GeoIp::DATABASE));
         });
 
+        $filesystem = new Filesystem();
         $kernelFile = (new ReflectionClass(static::class))->getFileName()
             ?: throw new RuntimeException(sprintf('%s has no file.', static::class));
-        $beside = dirname($kernelFile);
+        $beside = Path::getDirectory($kernelFile);
 
-        // Symfony accepts new firewalls only from the first file that names any. A bundle that needs a firewall of its own,
-        // like a frontend login, therefore lists all firewalls in this file, and it is loaded before the application's.
-        $security = $beside . '/config/security.yaml';
+        // Symfony accepts new firewalls only from the first file that names any. A bundle that needs a firewall of its
+        // own, like a frontend login, therefore lists all firewalls in this file. The file is loaded before the
+        // configuration of the application.
+        $security = Path::join($beside, 'config/security.yaml');
 
         $loader->load(static function (ContainerBuilder $container) use ($security): void {
             $container->addResource(new FileExistenceResource($security));
         });
 
-        if (is_file($security)) {
+        if ($filesystem->exists($security)) {
             $loader->load($security);
         }
 
         parent::registerContainerConfiguration($loader);
 
-        $package = dirname(__DIR__, 2) . '/config';
+        $package = Path::join(__DIR__, '../../config');
 
-        $loader->load($package . '/testing.yaml');
+        $loader->load(Path::join($package, 'testing.yaml'));
 
         $registered = array_map(static fn (object $bundle): string => $bundle::class, $this->getBundles());
 
         foreach (self::CONFIGURED_WHEN_PRESENT as $bundle => $file) {
             if (in_array($bundle, $registered, true)) {
-                $loader->load($package . '/testing/' . $file);
+                $loader->load(Path::join($package, 'testing', $file));
             }
         }
 
-        $environment = sprintf('%s/config/%s.yaml', $beside, $this->getEnvironment());
+        $environment = Path::join($beside, 'config', $this->getEnvironment() . '.yaml');
 
         // Without the resource, a configuration added after the first run would be ignored until the cache is cleared.
         $loader->load(static function (ContainerBuilder $container) use ($environment): void {
             $container->addResource(new FileExistenceResource($environment));
         });
 
-        if (is_file($environment)) {
+        if ($filesystem->exists($environment)) {
             $loader->load($environment);
         }
     }
@@ -123,18 +127,21 @@ trait Testable
      */
     private function directoriesUnderTest(): array
     {
-        $tests = realpath($this->getProjectDir() . '/tests');
+        $tests = realpath(Path::join($this->getProjectDir(), 'tests'));
 
         return $tests === false ? [$this->packageUnderTest()] : [$this->packageUnderTest(), $tests];
     }
 
     /**
-     * A bundle is tested inside an application that `opendxp-test bundle` builds and names it in.
-     * A project is the application.
+     * Returns the directory of the package under test.
+     *
+     * A bundle is tested inside an application that `opendxp-test bundle` builds and names it in. A project is the
+     * application.
      */
     private function packageUnderTest(): string
     {
-        $manifest = json_decode((string) file_get_contents($this->getProjectDir() . '/composer.json'), true);
+        $manifestFile = Path::join($this->getProjectDir(), 'composer.json');
+        $manifest = json_decode((new Filesystem())->readFile($manifestFile), true, flags: JSON_THROW_ON_ERROR);
         $package = $manifest['extra']['opendxp-test']['package'] ?? null;
 
         $directory = $package === null

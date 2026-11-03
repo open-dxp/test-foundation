@@ -4,39 +4,29 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation;
 
-use RuntimeException;
+use SplFileObject;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 
 final class Files
 {
     public static function create(string $name, int $megabytes = 1): string
     {
-        $path = self::directory() . '/' . $name;
+        $filesystem = new Filesystem();
+        $directory = Path::join(OPENDXP_PRIVATE_VAR, 'tests');
+        $path = Path::join($directory, $name);
 
-        if (is_file($path)) {
+        if ($filesystem->exists($path)) {
             return $path;
         }
 
-        $file = fopen($path, 'w');
+        $filesystem->mkdir($directory);
 
-        if ($file === false) {
-            throw new RuntimeException(sprintf('Could not write a test file to %s.', $path));
-        }
-
-        fseek($file, $megabytes * 1_000_000 - 1);
-        fwrite($file, "\0");
-        fclose($file);
+        // Writing only the last byte creates a sparse file, which costs neither time nor disk space.
+        $file = new SplFileObject($path, 'w');
+        $file->fseek($megabytes * 1_000_000 - 1);
+        $file->fwrite("\0");
 
         return $path;
-    }
-
-    private static function directory(): string
-    {
-        $directory = OPENDXP_PRIVATE_VAR . '/tests';
-
-        if (!is_dir($directory) && !mkdir($directory, recursive: true) && !is_dir($directory)) {
-            throw new RuntimeException(sprintf('Could not create %s.', $directory));
-        }
-
-        return $directory;
     }
 }

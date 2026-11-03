@@ -16,12 +16,13 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
 #[AsCommand(
     name: 'bundle',
-    description: 'Completes the application in the working directory around a bundle. Run it after requiring this package.',
+    description: 'Builds the application in the working directory around a bundle.',
 )]
 final class BundleCommand extends Command
 {
@@ -45,7 +46,7 @@ final class BundleCommand extends Command
         $applicationDirectory = TestApplication::workingDirectory();
         $bundleDirectory = realpath($input->getArgument('bundle'))
             ?: throw new RuntimeException(sprintf('There is no bundle at %s.', $input->getArgument('bundle')));
-        $bundleManifest = self::readJson($bundleDirectory . '/composer.json');
+        $bundleManifest = self::readManifest($bundleDirectory);
 
         $this->writeApplicationManifest($applicationDirectory, $bundleDirectory, $bundleManifest);
 
@@ -57,7 +58,8 @@ final class BundleCommand extends Command
 
         // One resolution over everything, so that the bundle's requirements can still move what the foundation
         // brought, for example back to Pest 4 when a development dependency does not allow Pest 5.
-        $runner->mustRun([...$composer, 'require', '--no-update', '--no-interaction', ...BundleRequirements::collect($bundleManifest, $input->getOption('opendxp'))]);
+        $requirements = BundleRequirements::collect($bundleManifest, $input->getOption('opendxp'));
+        $runner->mustRun([...$composer, 'require', '--no-update', '--no-interaction', ...$requirements]);
         $runner->mustRun([...$composer, 'update', '--no-interaction', '--no-progress', '--no-scripts']);
 
         $this->copyApplicationTemplate($applicationDirectory);
@@ -70,9 +72,12 @@ final class BundleCommand extends Command
     /**
      * @param array<string, mixed> $bundleManifest
      */
-    private function writeApplicationManifest(string $applicationDirectory, string $bundleDirectory, array $bundleManifest): void
-    {
-        $manifest = self::readJson($applicationDirectory . '/composer.json');
+    private function writeApplicationManifest(
+        string $applicationDirectory,
+        string $bundleDirectory,
+        array $bundleManifest,
+    ): void {
+        $manifest = self::readManifest($applicationDirectory);
 
         $repositories = array_values($manifest['repositories'] ?? []);
 
@@ -95,8 +100,8 @@ final class BundleCommand extends Command
             $bundleManifest['autoload-dev']['psr-4'] ?? [],
         );
 
-        file_put_contents(
-            $applicationDirectory . '/composer.json',
+        (new Filesystem())->dumpFile(
+            Path::join($applicationDirectory, 'composer.json'),
             json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n",
         );
     }
@@ -116,16 +121,23 @@ final class BundleCommand extends Command
     }
 
     /**
-     * The tests are copied into the application, every other development path stays in the installed package.
+     * Returns the path in the application. The tests are copied into the application. Every other development path
+     * stays in the installed package.
      */
     private function locateDevelopmentPath(string $path, string $package): string
     {
-        return str_starts_with(trim($path, './'), 'tests') ? $path : sprintf('vendor/%s/%s', $package, ltrim($path, './'));
+        if (str_starts_with(trim($path, './'), 'tests')) {
+            return $path;
+        }
+
+        return sprintf('vendor/%s/%s', $package, ltrim($path, './'));
     }
 
     /**
-     * A checkout of a branch has no version that a constraint such as ^1.3 accepts. It reports the
-     * major version of its newest tag followed by .99.99 instead.
+     * Returns a path repository for the checkout.
+     *
+     * A checkout of a branch has no version that a constraint such as ^1.3 accepts. The repository reports the major
+     * version of its newest tag followed by .99.99 instead.
      *
      * @return array<string, mixed>
      */
@@ -158,34 +170,41 @@ final class BundleCommand extends Command
 
     private function copyApplicationTemplate(string $applicationDirectory): void
     {
-        $foundationDirectory = $applicationDirectory . '/vendor/' . BundleRequirements::FOUNDATION;
-        $templateDirectory = $foundationDirectory . '/' . self::readJson($foundationDirectory . '/composer.json')['extra']['app-template'];
+        $foundationDirectory = Path::join($applicationDirectory, 'vendor', BundleRequirements::FOUNDATION);
+        $template = self::readManifest($foundationDirectory)['extra']['app-template'];
 
         $filesystem = new Filesystem();
-        $filesystem->mirror($templateDirectory, $applicationDirectory, null, ['override' => true]);
-        $filesystem->mkdir($applicationDirectory . '/public');
+        $filesystem->mirror(
+            Path::join($foundationDirectory, $template),
+            $applicationDirectory,
+            options: ['override' => true],
+        );
+        $filesystem->mkdir(Path::join($applicationDirectory, 'public'));
     }
 
     /**
-     * Pest names a test after its path below the application, so the tests are copied and not reached through vendor.
+     * Copies the tests into the application. Pest names a test after its path below the application, so the tests
+     * cannot be reached through vendor.
      */
     private function copyTestSuite(string $applicationDirectory, string $bundleDirectory): void
     {
         $filesystem = new Filesystem();
-        $filesystem->copy($bundleDirectory . '/phpunit.xml.dist', $applicationDirectory . '/phpunit.xml', true);
-        $filesystem->remove($applicationDirectory . '/tests');
-        $filesystem->mirror($bundleDirectory . '/tests', $applicationDirectory . '/tests');
+        $filesystem->copy(
+            Path::join($bundleDirectory, 'phpunit.xml.dist'),
+            Path::join($applicationDirectory, 'phpunit.xml'),
+            overwriteNewerFiles: true,
+        );
+        $filesystem->remove(Path::join($applicationDirectory, 'tests'));
+        $filesystem->mirror(Path::join($bundleDirectory, 'tests'), Path::join($applicationDirectory, 'tests'));
     }
 
     /**
      * @return array<string, mixed>
      */
-    private static function readJson(string $file): array
+    private static function readManifest(string $directory): array
     {
-        if (!is_file($file)) {
-            throw new RuntimeException(sprintf('%s does not exist.', $file));
-        }
+        $manifest = (new Filesystem())->readFile(Path::join($directory, 'composer.json'));
 
-        return json_decode((string) file_get_contents($file), true, flags: JSON_THROW_ON_ERROR);
+        return json_decode($manifest, true, flags: JSON_THROW_ON_ERROR);
     }
 }

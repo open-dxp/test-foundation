@@ -22,7 +22,9 @@ final readonly class DatabaseConnection
         $parts = parse_url($url);
 
         if ($parts === false || !isset($parts['host'], $parts['path'])) {
-            throw new RuntimeException('DATABASE_URL names no database. Expected mysql://user:password@host:3306/name.');
+            throw new RuntimeException(
+                'DATABASE_URL names no database. Expected mysql://user:password@host:3306/name.',
+            );
         }
 
         return new self(

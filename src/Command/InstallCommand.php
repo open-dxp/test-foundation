@@ -21,7 +21,7 @@ use Symfony\Component\Process\Process;
 
 #[AsCommand(
     name: 'install',
-    description: 'Installs OpenDXP, its bundles and the data object classes into the application in the working directory.',
+    description: 'Installs OpenDXP, its bundles and the data object classes into the application.',
 )]
 final class InstallCommand extends Command
 {
@@ -42,7 +42,8 @@ final class InstallCommand extends Command
         $runner = new ProcessRunner($output, $application->directory);
         $database = DatabaseConnection::fromUrl($_SERVER['DATABASE_URL'] ?? '');
 
-        // Without debug, a command does not compile the container again after a bundle install changed the configuration.
+        // Without debug, a command does not compile the container again after a bundle install changed the
+        // configuration.
         $environment = [...$application->consoleEnvironment(), 'APP_DEBUG' => '0'];
 
         // The installers write the definitions they ship over the ones a project changed.
@@ -62,14 +63,18 @@ final class InstallCommand extends Command
             '--no-interaction',
         ), $environment);
 
-        // An uninstalled bundle creates its tables inside the first test that needs them, and that DDL ends the test's transaction.
-        // A bundle can become installable only once another one is installed, so the list is asked again after each round.
+        // An uninstalled bundle creates its tables inside the first test that needs them, and that DDL ends the
+        // transaction of the test. A bundle can become installable only once another one is installed, so the list
+        // is asked again after each round.
         $installed = [];
 
         while ($bundles = array_diff($this->findUninstalledBundles($application, $environment), $installed)) {
             foreach ($bundles as $bundle) {
                 $output->writeln('Installing ' . $bundle);
-                $runner->mustRun($application->consoleCommand('opendxp:bundle:install', $bundle, '--no-post-change-commands'), $environment);
+                $runner->mustRun(
+                    $application->consoleCommand('opendxp:bundle:install', $bundle, '--no-post-change-commands'),
+                    $environment,
+                );
                 $installed[] = $bundle;
             }
         }
@@ -81,15 +86,22 @@ final class InstallCommand extends Command
         $notMarked = $this->findUninstalledBundles($application, $environment);
 
         if ($notMarked !== []) {
-            throw new RuntimeException(sprintf('%s ran its installer but is not marked as installed.', implode(', ', $notMarked)));
+            throw new RuntimeException(sprintf(
+                '%s ran its installer but is not marked as installed.',
+                implode(', ', $notMarked),
+            ));
         }
 
         foreach ($application->migrationNamespacesOfPackageUnderTest() as $namespace) {
             try {
-                $runner->mustRun($application->consoleCommand('doctrine:migrations:up-to-date', '--prefix=' . $namespace . '\\'), $environment);
+                $runner->mustRun(
+                    $application->consoleCommand('doctrine:migrations:up-to-date', '--prefix=' . $namespace . '\\'),
+                    $environment,
+                );
             } catch (RuntimeException) {
                 throw new RuntimeException(sprintf(
-                    'The installation leaves migrations of %s to run. The installer calls markMigrationsAsExecuted() in install().',
+                    'The installation leaves migrations of %s to run. '
+                    . 'The installer calls markMigrationsAsExecuted() in install().',
                     $namespace,
                 ));
             }
@@ -103,7 +115,10 @@ final class InstallCommand extends Command
 
         if ($hasClasses) {
             $output->writeln('Creating the data object classes');
-            $runner->mustRun($application->consoleCommand('opendxp:deployment:classes-rebuild', '--create-classes', '-n', '-q'), $environment);
+            $runner->mustRun(
+                $application->consoleCommand('opendxp:deployment:classes-rebuild', '--create-classes', '-n', '-q'),
+                $environment,
+            );
         }
 
         // No installer marks the migrations of the application itself.
@@ -134,7 +149,11 @@ final class InstallCommand extends Command
      */
     private function findUninstalledBundles(TestApplication $application, array $environment): array
     {
-        $bundleList = new Process($application->consoleCommand('opendxp:bundle:list', '--json'), $application->directory, $environment);
+        $bundleList = new Process(
+            $application->consoleCommand('opendxp:bundle:list', '--json'),
+            $application->directory,
+            $environment,
+        );
         $bundleList->mustRun();
 
         $uninstalled = [];
