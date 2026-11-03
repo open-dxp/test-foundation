@@ -26,13 +26,15 @@ final readonly class ProcessRunner
     {
         $collectedOutput = '';
 
-        $exitCode = $this->createProcess($command, $environment)->run(function (string $type, string $buffer) use (&$collectedOutput): void {
-            $collectedOutput .= $buffer;
+        $exitCode = $this->createProcess($command, $environment)->run(
+            function (string $type, string $buffer) use (&$collectedOutput): void {
+                $collectedOutput .= $buffer;
 
-            if ($this->output->isVerbose()) {
-                $this->output->write($buffer);
-            }
-        });
+                if ($this->output->isVerbose()) {
+                    $this->output->write($buffer);
+                }
+            },
+        );
 
         if ($exitCode === 0) {
             return;
@@ -62,6 +64,6 @@ final readonly class ProcessRunner
      */
     private function createProcess(array $command, array $environment): Process
     {
-        return new Process($command, $this->workingDirectory, $environment, null, null);
+        return new Process($command, $this->workingDirectory, $environment, timeout: null);
     }
 }

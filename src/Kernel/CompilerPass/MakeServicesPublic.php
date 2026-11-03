@@ -18,8 +18,7 @@ final readonly class MakeServicesPublic implements CompilerPassInterface
     }
 
     /**
-     * Symfony removes a private service that nothing injects, and the services of a package are rarely injected in its
-     * test application. Those whose class lies in one of the directories are made public, so a test can still fetch them.
+     * Makes the services whose class lies in one of the directories public, so a test can fetch them.
      */
     public function process(ContainerBuilder $container): void
     {
@@ -32,7 +31,11 @@ final readonly class MakeServicesPublic implements CompilerPassInterface
         foreach ($container->getAliases() as $alias) {
             $target = (string) $alias;
 
-            if ($container->hasDefinition($target) && $this->isUnderTest($container, $container->getDefinition($target))) {
+            if (!$container->hasDefinition($target)) {
+                continue;
+            }
+
+            if ($this->isUnderTest($container, $container->getDefinition($target))) {
                 $alias->setPublic(true);
             }
         }

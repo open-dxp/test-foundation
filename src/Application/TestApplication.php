@@ -61,8 +61,10 @@ final readonly class TestApplication
     }
 
     /**
-     * The namespaces of the migrations the package under test ships. A bundle is tested inside an application that
-     * names it in composer.json. A project is the application and names no package, so it has none.
+     * Returns the namespaces of the migrations that the package under test ships.
+     *
+     * A bundle is tested inside an application that names it in composer.json. A project is the application and names
+     * no package, so it has none.
      *
      * @return list<string>
      */
@@ -104,8 +106,10 @@ final readonly class TestApplication
     }
 
     /**
-     * The namespaces of the migrations the application ships itself. A package ships all other migrations.
-     * A bundle registers its directory as `@BundleName/...`, which is no path inside the application.
+     * Returns the namespaces of the migrations that the application ships itself.
+     *
+     * A package ships all other migrations. A bundle registers its directory as `@BundleName/...`, which is no path
+     * inside the application.
      *
      * @param array<string, string> $migrationPaths the configured `doctrine_migrations.migrations_paths`
      *
@@ -131,7 +135,8 @@ final readonly class TestApplication
     }
 
     /**
-     * OpenDXP's console reads the kernel class from OPENDXP_KERNEL_CLASS, not from phpunit.xml.
+     * Returns the variables the console of OpenDXP needs. It reads the kernel class from OPENDXP_KERNEL_CLASS, not from
+     * phpunit.xml.
      *
      * @return array<string, string>
      */

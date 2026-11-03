@@ -7,6 +7,7 @@ namespace OpenDxp\TestFoundation;
 use OpenDxp\Model\User;
 use OpenDxp\Security\User\User as SecurityUser;
 use Closure;
+use LogicException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser as Client;
 use Zenstruck\Browser\KernelBrowser;
 use Zenstruck\Browser\PlaywrightBrowser;
@@ -42,7 +43,7 @@ final class Browser
 
     public static function playwright(): PlaywrightBrowser
     {
-        return (self::$playwright ?? throw new \LogicException(
+        return (self::$playwright ?? throw new LogicException(
             'No browser available. A test driving one must extend ' . BrowserTestCase::class . '.'
         ))();
     }

@@ -13,8 +13,9 @@ final class UseFoundationControllerWithoutApplication implements CompilerPassInt
     private const string PARAMETER = 'opendxp.documents.default_controller';
 
     /**
-     * The test application of a bundle has no default controller of its own, while a project renders its pages through its own.
-     * The controller of the foundation therefore only steps in when the configured one does not exist.
+     * Sets the default controller of the foundation when the configured one does not exist.
+     *
+     * The test application of a bundle has no default controller. A project renders its pages through its own.
      */
     public function process(ContainerBuilder $container): void
     {

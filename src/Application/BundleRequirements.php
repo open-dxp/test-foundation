@@ -22,7 +22,11 @@ final class BundleRequirements
 
         // The foundation testing itself is installed already, as the package under test.
         if ($bundleManifest['name'] !== self::FOUNDATION && !isset($devRequirements[self::FOUNDATION])) {
-            throw new RuntimeException(sprintf('%s does not require %s in require-dev.', $bundleManifest['name'], self::FOUNDATION));
+            throw new RuntimeException(sprintf(
+                '%s does not require %s in require-dev.',
+                $bundleManifest['name'],
+                self::FOUNDATION,
+            ));
         }
 
         unset($devRequirements[self::FOUNDATION]);

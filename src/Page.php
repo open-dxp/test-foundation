@@ -25,7 +25,7 @@ final readonly class Page
     }
 
     /**
-     * The page comes from the kernel, without JavaScript.
+     * Opens the page through the kernel, without JavaScript.
      */
     public static function open(string $path): self
     {
@@ -35,7 +35,7 @@ final readonly class Page
     }
 
     /**
-     * The page runs in a real browser, with its scripts. The test extends the browser test case.
+     * Opens the page in a real browser, with its scripts. The test extends the browser test case.
      */
     public static function inBrowser(string $path): self
     {
@@ -173,17 +173,7 @@ final readonly class Page
 
     public function check(string $label): self
     {
-        $field = $this->findField('input', $label, $this->crawler());
-        $name = (string) $field->attr('name');
-
-        if ($field->attr('type') === 'radio') {
-            $this->browser->selectFieldOption($name, (string) $field->attr('value'));
-        } else {
-            // The checkboxes of a group share their name, only the id tells them apart.
-            $this->browser->checkField((string) ($field->attr('id') ?? $name));
-        }
-
-        return $this;
+        return $this->checkField($this->findField('input', $label, $this->crawler()));
     }
 
     /**
@@ -191,15 +181,7 @@ final readonly class Page
      */
     public function checkWithin(string $region, string $label): self
     {
-        $field = $this->findField('input', $label, $this->region($region));
-
-        if ($field->attr('type') === 'radio') {
-            $this->browser->selectFieldOption((string) $field->attr('name'), (string) $field->attr('value'));
-        } else {
-            $this->browser->checkField((string) ($field->attr('id') ?? $field->attr('name')));
-        }
-
-        return $this;
+        return $this->checkField($this->findField('input', $label, $this->region($region)));
     }
 
     /**
@@ -238,7 +220,7 @@ final readonly class Page
     }
 
     /**
-     * Whether the browser shows the field a label names. Only a real browser knows what its styles hide.
+     * Returns whether the browser shows the field that a label names. Only a real browser knows what its styles hide.
      */
     public function isVisible(string $label): bool
     {
@@ -266,7 +248,7 @@ final readonly class Page
     }
 
     /**
-     * The messages the page shows after the last step, like "Item added".
+     * Returns the messages that the page shows after the last step, like "Item added".
      *
      * @return list<string>
      */
@@ -283,7 +265,7 @@ final readonly class Page
     }
 
     /**
-     * How often the page shows the text, like a help text that must not appear twice.
+     * Returns how often the page shows the text, like a help text that must not appear twice.
      */
     public function occurrences(string $text): int
     {
@@ -301,7 +283,7 @@ final readonly class Page
     }
 
     /**
-     * Whether the page shows a button. In a real browser a button its style hides does not count.
+     * Returns whether the page shows a button. In a real browser, a button that its style hides does not count.
      */
     public function showsButton(string $button): bool
     {
@@ -410,7 +392,7 @@ final readonly class Page
     }
 
     /**
-     * The text the field names as its description with aria-describedby, like a help text.
+     * Returns the text that the field names as its description with aria-describedby, like a help text.
      */
     public function description(string $label): string
     {
@@ -424,8 +406,10 @@ final readonly class Page
     }
 
     /**
-     * The rows of a table, each as the text of its cells. A row that names a group of rows has a single cell. A cell
-     * without text, like an image, an icon or a form control, is left out.
+     * Returns the rows of a table, each as the text of its cells.
+     *
+     * A row that names a group of rows has a single cell. A cell without text, like an image, an icon or a form
+     * control, is left out.
      *
      * @return list<list<string>>
      */
@@ -451,7 +435,7 @@ final readonly class Page
     }
 
     /**
-     * The element a label names, for a page object that reads what this class does not.
+     * Returns the element that a label names, for a page object that reads what this class does not.
      */
     public function field(string $label): Crawler
     {
@@ -491,7 +475,7 @@ final readonly class Page
     }
 
     /**
-     * The text of the element as a reader sees it, with each run of whitespace as one space.
+     * Returns the text of the element as a reader sees it, with each run of whitespace as one space.
      */
     private static function read(Crawler $element): string
     {
@@ -499,7 +483,8 @@ final readonly class Page
     }
 
     /**
-     * A field is named by its label, by its aria-label or by the element its aria-labelledby points to.
+     * Finds the field that a label names. The name comes from a label element, from aria-label or from the element
+     * that aria-labelledby points to.
      *
      * @param string $elements the names of the elements it may be, like "input|textarea", or "*" for any
      */
@@ -557,6 +542,22 @@ final readonly class Page
         return $this;
     }
 
+    private function checkField(Crawler $field): self
+    {
+        $name = (string) $field->attr('name');
+
+        if ($field->attr('type') === 'radio') {
+            $this->browser->selectFieldOption($name, (string) $field->attr('value'));
+
+            return $this;
+        }
+
+        // The checkboxes of a group share their name. Only the id tells them apart.
+        $this->browser->checkField((string) ($field->attr('id') ?? $name));
+
+        return $this;
+    }
+
     private function selectOptions(Crawler $field, string $label, string ...$options): self
     {
         $values = array_map(
@@ -606,7 +607,8 @@ final readonly class Page
     }
 
     /**
-     * Only the kernel tells the status of a response. A rejected form answers 422 with its errors.
+     * Asserts that the request succeeded. Only the kernel knows the status of a response. A rejected form answers 422
+     * with its errors.
      */
     private function succeeded(Browser $browser): void
     {

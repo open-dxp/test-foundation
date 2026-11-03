@@ -12,6 +12,7 @@ use OpenDxp\Model\DataObject;
 use OpenDxp\Model\DataObject\Localizedfield;
 use OpenDxp\Model\Document;
 use OpenDxp\Model\Site;
+use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -82,8 +83,7 @@ abstract class TestCase extends KernelTestCase
     }
 
     /**
-     * A test answers no request, so nothing sets the statics OpenDxpContextListener sets for the
-     * frontend.
+     * Sets the statics that OpenDxpContextListener sets for a frontend request. A test answers no request.
      */
     private static function serveTheFrontend(): void
     {
@@ -95,10 +95,10 @@ abstract class TestCase extends KernelTestCase
     }
 
     /**
-     * Delete this once `Site::setCurrentSite()` accepts null, which it does not today.
+     * Resets the current site through reflection, because `Site::setCurrentSite()` does not accept null.
      */
     private static function forgetCurrentSite(): void
     {
-        (new \ReflectionProperty(Site::class, 'currentSite'))->setValue(null, null);
+        (new ReflectionProperty(Site::class, 'currentSite'))->setValue(null, null);
     }
 }
