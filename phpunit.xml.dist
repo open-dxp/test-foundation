@@ -9,6 +9,7 @@
             <directory>tests/Environment</directory>
             <directory>tests/Feature</directory>
             <directory>tests/Unit</directory>
+            <directory>tests/WithoutRollback</directory>
             <directory>tests/Browser</directory>
         </testsuite>
     </testsuites>

@@ -233,11 +233,12 @@ The configuration of the foundation adapts OpenDXP to tests:
 
 ## Test cases
 
-| Test case             | What it does                                          |
-|-----------------------|-------------------------------------------------------|
-| `TestCase`            | boots the application and handles requests            |
-| `BrowserTestCase`     | the same, plus a real browser                         |
-| `EnvironmentTestCase` | the same, in another configuration of the application |
+| Test case                 | What it does                                                       |
+|---------------------------|--------------------------------------------------------------------|
+| `TestCase`                | boots the application and handles requests                         |
+| `BrowserTestCase`         | the same, plus a real browser                                      |
+| `EnvironmentTestCase`     | the same, in another configuration of the application              |
+| `WithoutRollbackTestCase` | the same, but restores a database snapshot instead of rolling back |
 
 Every test runs in a database transaction. The transaction is rolled back after the test.
 
@@ -256,23 +257,100 @@ other static state it changes.
 
 ### Tests without rollback
 
-A change to the schema commits the transaction. InnoDB also writes a full text index only on
-commit. A test that needs either of these runs under a test case that skips the rollback:
+Some tests need committed data:
+
+- A schema change commits the transaction.
+- InnoDB updates a full-text index only on commit.
+- A concurrent process only sees committed data.
+
+These tests extend `WithoutRollbackTestCase`. It takes a snapshot of the database before the first
+of these tests and restores it after each test. The snapshot also undoes the changes made by the
+processes of `Concurrency::run()`. A test therefore never cleans up after itself.
+
+The snapshot is stored in tables prefixed with `snapshot_` in the same database. The database user
+needs no additional privileges. Files on disk are not restored, such as the files of versions and
+assets. Schema changes are not restored either.
+
+To combine the snapshot with another test case, call `DatabaseSnapshot` in your own test case:
 
 ```php
 use DAMA\DoctrineTestBundle\PHPUnit\SkipDatabaseRollback;
-use OpenDxp\TestFoundation\TestCase;
+use OpenDxp\TestFoundation\DatabaseSnapshot;
+use OpenDxp\TestFoundation\EnvironmentTestCase;
 
 #[SkipDatabaseRollback]
-abstract class SchemaTestCase extends TestCase
+abstract class FullPageCacheWithoutRollbackTestCase extends EnvironmentTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        DatabaseSnapshot::save();
+    }
+
+    protected function tearDown(): void
+    {
+        DatabaseSnapshot::restore();
+
+        parent::tearDown();
+    }
+
+    protected static function environment(): string
+    {
+        return 'full_page_cache';
+    }
 }
 ```
 
-> [!IMPORTANT]
-> Without the rollback, nothing cleans up for you. Such a test removes what it wrote, in
-> `afterEach()` or in the `tearDown()` of its test case. Anything it leaves behind is still there for
-> the next run.
+### Concurrency
+
+Concurrent requests that change the same data can leave it in an inconsistent state. For example,
+two customers redeem the same voucher code at the same time. `Concurrency::run()` runs closures in
+parallel and returns their results in the order of the closures.
+
+Concurrency tests need committed data. Their folder extends `WithoutRollbackTestCase` in `tests/Pest.php`:
+
+```php
+pest()->extend(WithoutRollbackTestCase::class)->in('Feature/Concurrency');
+```
+
+The test sends the same request twice at the same time:
+
+```php
+use OpenDxp\TestFoundation\Concurrency;
+use OpenDxp\TestFoundation\Container;
+
+it('redeems a voucher code only once', function () {
+
+    VoucherFactory::createOne(['code' => 'WELCOME']);
+
+    $redeem = function (): int {
+        $client = Container::testClient();
+        $client->request('POST', '/voucher/WELCOME/redeem');
+
+        return $client->getResponse()->getStatusCode();
+    };
+
+    expect(Concurrency::run($redeem, $redeem))
+        ->toEqualCanonicalizing([
+            200,
+            409,
+        ]);
+});
+```
+
+Each closure runs in a separate process. Every process behaves like a new request with its own
+kernel, database connection and session. The processes only see committed data. For this reason,
+`Concurrency::run()` throws an exception in a test with rollback.
+
+A race condition only shows up when the processes reach the critical section at the same time. A
+test double usually keeps that section open, for example by waiting one second between loading the
+voucher and saving it. Make sure the test fails when you remove the protection it covers.
+
+A closure must return a serializable value, such as a status code. If a process throws an
+exception, its result is empty and the expectations of the test fail. Models loaded before
+`Concurrency::run()` do not reflect the changes made by the processes. Reload them with
+`['force' => true]` or query the database.
 
 ### Another configuration
 
