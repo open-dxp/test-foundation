@@ -47,6 +47,10 @@ Every rule here holds for every test. Apply all of them while you write, not aft
 
 - Every test runs in a transaction that is rolled back.
 - A test restores any static or global state it changes, in `afterEach()` or `->after()`.
+- A test that needs committed data extends `WithoutRollbackTestCase`. The test case restores the
+  database, so the test does not clean up after itself.
+- A race condition is tested with `Concurrency::run()`. The test fails when the protection it covers
+  is removed.
 - `config/test.yaml` holds only what every test needs. A test that needs more runs in a test case
   that extends `EnvironmentTestCase`, with a configuration that imports `test.yaml`.
 - A test against an external service skips itself when the variable of the service is missing.

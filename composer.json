@@ -11,6 +11,7 @@
         "pestphp/pest": "^4.7 || ^5.0",
         "playwright-php/playwright": "^1.5",
         "playwright-php/playwright-symfony": "^0.11",
+        "spatie/fork": "^1.2.8",
         "symfony/config": "^7.4",
         "symfony/console": "^7.4",
         "symfony/dependency-injection": "^7.4",
