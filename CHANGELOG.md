@@ -3,6 +3,7 @@
 ## 1.2.8
 - [NEW FEATURE] `Concurrency::run()` tests race conditions with closures in parallel processes. See [Concurrency](README.md#concurrency)
 - [NEW FEATURE] `WithoutRollbackTestCase` restores a database snapshot instead of rolling back. See [Tests without rollback](README.md#tests-without-rollback)
+- [BUGFIX] `Admin::actingAs()` grants the roles of the user
 
 ## 1.2.7
 - [NEW FEATURE] `InstallDefinitions` installs the definitions OpenDXP ships for tests when the parameter `opendxp-definitions` is `true`
