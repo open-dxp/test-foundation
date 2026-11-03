@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace OpenDxp\TestFoundation\Application;
 
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
+
 final class EnvironmentFile
 {
     private const string TEMPLATE = 'vendor/open-dxp/test-foundation/app/.env.dist';
@@ -13,9 +16,11 @@ final class EnvironmentFile
      */
     public static function writeFromTemplate(string $applicationDirectory): void
     {
+        $filesystem = new Filesystem();
+        $template = $filesystem->readFile(Path::join($applicationDirectory, self::TEMPLATE));
         $lines = [];
 
-        foreach (file($applicationDirectory . '/' . self::TEMPLATE, FILE_IGNORE_NEW_LINES) ?: [] as $templateLine) {
+        foreach (explode("\n", $template) as $templateLine) {
             $name = strstr($templateLine, '=', true);
 
             if ($name === false || str_starts_with($templateLine, '#')) {
@@ -30,6 +35,6 @@ final class EnvironmentFile
         $lines[] = 'KERNEL_CLASS=' . $kernelClass;
         $lines[] = 'OPENDXP_KERNEL_CLASS=' . $kernelClass;
 
-        file_put_contents($applicationDirectory . '/.env', implode("\n", $lines) . "\n");
+        $filesystem->dumpFile(Path::join($applicationDirectory, '.env'), implode("\n", $lines) . "\n");
     }
 }

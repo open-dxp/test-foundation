@@ -13,6 +13,10 @@ use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
 use PHPUnit\TextUI\Configuration\Configuration;
 use ReflectionClass;
+use RuntimeException;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Finder\Finder;
 
 final class InstallDefinitions implements Extension
 {
@@ -44,15 +48,11 @@ final class InstallDefinitions implements Extension
 
         $found = [];
 
-        foreach (self::DEFINITIONS as $kind => $installer) {
-            $found[$kind] = [];
-
-            foreach ($directories as $directory) {
-                $found[$kind] = array_merge($found[$kind], glob(sprintf('%s/%s/*.json', $directory, $kind)) ?: []);
-            }
+        foreach (array_keys(self::DEFINITIONS) as $kind) {
+            $found[$kind] = self::findDefinitions($directories, $kind);
         }
 
-        if ($found === array_fill_keys(array_keys(self::DEFINITIONS), [])) {
+        if (array_merge(...array_values($found)) === []) {
             return;
         }
 
@@ -60,17 +60,45 @@ final class InstallDefinitions implements Extension
 
         foreach (self::DEFINITIONS as $kind => $installer) {
             foreach ($found[$kind] as $definition) {
-                $installer(basename($definition, '.json'), $definition);
+                $installer(Path::getFilenameWithoutExtension($definition), $definition);
             }
         }
 
         $kernel->shutdown();
     }
 
+    /**
+     * @param list<string> $directories
+     *
+     * @return list<string> the definition files in the order of the directories, each directory sorted by name
+     */
+    private static function findDefinitions(array $directories, string $kind): array
+    {
+        $filesystem = new Filesystem();
+        $definitions = [];
+
+        foreach ($directories as $directory) {
+            $kindDirectory = Path::join($directory, $kind);
+
+            if (!$filesystem->exists($kindDirectory)) {
+                continue;
+            }
+
+            $files = Finder::create()->files()->in($kindDirectory)->depth(0)->name('*.json')->sortByName();
+
+            foreach ($files as $file) {
+                $definitions[] = $file->getPathname();
+            }
+        }
+
+        return $definitions;
+    }
+
     private static function openDxpDirectory(): string
     {
-        $file = (new ReflectionClass(ClassDefinitions::class))->getFileName();
+        $file = (new ReflectionClass(ClassDefinitions::class))->getFileName()
+            ?: throw new RuntimeException(sprintf('%s has no file.', ClassDefinitions::class));
 
-        return sprintf('%s/Fixtures', dirname((string) $file));
+        return Path::join(Path::getDirectory($file), 'Fixtures');
     }
 }
