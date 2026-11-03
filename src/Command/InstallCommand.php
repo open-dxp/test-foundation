@@ -14,6 +14,9 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Process;
 
 #[AsCommand(
@@ -27,9 +30,12 @@ final class InstallCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $filesystem = new Filesystem();
+        $workingDirectory = TestApplication::workingDirectory();
+
         // Symfony's runtime does not start without a .env, and a project keeps its own out of the repository.
-        if (!is_file(TestApplication::workingDirectory() . '/.env')) {
-            EnvironmentFile::writeFromTemplate(TestApplication::workingDirectory());
+        if (!$filesystem->exists(Path::join($workingDirectory, '.env'))) {
+            EnvironmentFile::writeFromTemplate($workingDirectory);
         }
 
         $application = TestApplication::fromWorkingDirectory();
@@ -91,9 +97,27 @@ final class InstallCommand extends Command
 
         $runner->mustRun($application->consoleCommand('assets:install', 'public', '-q'), $environment);
 
-        if (glob($application->directory . '/var/classes/definition_*.php')) {
+        $classDefinitions = Path::join($application->directory, 'var/classes');
+        $hasClasses = $filesystem->exists($classDefinitions)
+            && Finder::create()->files()->in($classDefinitions)->depth(0)->name('definition_*.php')->hasResults();
+
+        if ($hasClasses) {
             $output->writeln('Creating the data object classes');
             $runner->mustRun($application->consoleCommand('opendxp:deployment:classes-rebuild', '--create-classes', '-n', '-q'), $environment);
+        }
+
+        // No installer marks the migrations of the application itself.
+        // They often load data objects, so they run after the classes exist.
+        $migrationPaths = $this->findMigrationPaths($application, $environment);
+
+        foreach ($application->migrationNamespacesOfApplication($migrationPaths) as $namespace) {
+            $output->writeln('Running the migrations of ' . $namespace);
+            $runner->mustRun($application->consoleCommand(
+                'doctrine:migrations:migrate',
+                '--prefix=' . $namespace . '\\',
+                '--allow-no-migration',
+                '-n',
+            ), $environment);
         }
 
         // PHPStan reads the container file that only a debug boot writes.
@@ -122,5 +146,25 @@ final class InstallCommand extends Command
         }
 
         return $uninstalled;
+    }
+
+    /**
+     * @param array<string, string> $environment
+     *
+     * @return array<string, string>
+     */
+    private function findMigrationPaths(TestApplication $application, array $environment): array
+    {
+        $configuration = new Process(
+            $application->consoleCommand('debug:config', 'doctrine_migrations', '--format=json'),
+            $application->directory,
+            $environment,
+        );
+
+        $configuration->mustRun();
+
+        $configured = json_decode($configuration->getOutput(), true, flags: JSON_THROW_ON_ERROR);
+
+        return $configured['doctrine_migrations']['migrations_paths'];
     }
 }

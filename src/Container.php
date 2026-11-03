@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace OpenDxp\TestFoundation;
 
 use Closure;
-use Psr\Container\ContainerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
 
@@ -33,9 +33,9 @@ final class Container
     /**
      * @template T of object
      *
-     * @param class-string<T> $service
+     * @param class-string<T>|string $service a class or the id of a service
      *
-     * @return T
+     * @return ($service is class-string<T> ? T : object)
      */
     public static function get(string $service): object
     {

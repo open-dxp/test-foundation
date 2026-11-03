@@ -154,6 +154,10 @@ final class TestKernel extends Kernel
 `phpunit.xml.dist` and `tests/Pest.php` are the same as for a bundle. `KERNEL_CLASS` names
 `App\Tests\TestKernel`. A project has no `tests/Application/` directory.
 
+> [!NOTE]
+> `opendxp-test install` runs the project's own migrations after it creates the data object classes.
+> Migrations in `vendor/` or in a bundle belong to a package. Its installer marks them as executed.
+
 ## Run the tests
 
 ### With the testkit

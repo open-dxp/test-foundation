@@ -399,8 +399,9 @@ final readonly class Page
     {
         $groups = [];
 
-        foreach ($this->findField('select', $label, $this->crawler())->filter('optgroup') as $group) {
-            $groups[(string) $group->getAttribute('label')] = (new Crawler($group))
+        foreach ($this->findField('select', $label, $this->crawler())->filter('optgroup') as $node) {
+            $group = new Crawler($node);
+            $groups[(string) $group->attr('label')] = $group
                 ->filter('option')
                 ->each(static fn (Crawler $option) => self::read($option));
         }

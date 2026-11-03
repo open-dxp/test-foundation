@@ -20,3 +20,15 @@ it('hands the user it acts as to a service that asks who is logged in', function
 
     expect($actingAs?->getId())->toBe($user->getId());
 });
+
+it('grants the roles of the user it acts as', function () {
+    $user = new User();
+    $user->setName('acting-as-' . uniqid());
+    $user->setAdmin(true);
+    $user->save();
+
+    Admin::actingAs($user);
+
+    expect(Container::get(TokenStorageInterface::class)->getToken()?->getRoleNames())
+        ->toBe(['ROLE_OPENDXP_ADMIN']);
+});

@@ -31,6 +31,9 @@ abstract class TestCase extends KernelTestCase
         return true;
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     protected static function createKernel(array $options = []): KernelInterface
     {
         return parent::createKernel(['debug' => static::debug()] + $options);

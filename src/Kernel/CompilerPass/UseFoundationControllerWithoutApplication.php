@@ -18,8 +18,7 @@ final class UseFoundationControllerWithoutApplication implements CompilerPassInt
      */
     public function process(ContainerBuilder $container): void
     {
-        $controller = $container->getParameter(self::PARAMETER);
-        $class = is_string($controller) ? explode('::', $controller)[0] : '';
+        $class = explode('::', $container->getParameter(self::PARAMETER))[0];
 
         if (class_exists($class) || $container->has($class)) {
             return;

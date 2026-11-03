@@ -19,8 +19,10 @@ final class Admin
      */
     public static function actingAs(User $user): void
     {
+        $securityUser = new SecurityUser($user);
+
         Container::get(TokenStorageInterface::class)->setToken(
-            new UsernamePasswordToken(new SecurityUser($user), self::FIREWALL, $user->getRoles()),
+            new UsernamePasswordToken($securityUser, self::FIREWALL, $securityUser->getRoles()),
         );
     }
 }
