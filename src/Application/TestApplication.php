@@ -103,6 +103,28 @@ final readonly class TestApplication
         return array_keys($namespaces);
     }
 
+    /**
+     * The namespaces of the migrations the application ships itself. A package ships all other migrations.
+     * A bundle registers its directory as `@BundleName/...`, which is no path inside the application.
+     *
+     * @param array<string, string> $migrationPaths the configured `doctrine_migrations.migrations_paths`
+     *
+     * @return list<string>
+     */
+    public function migrationNamespacesOfApplication(array $migrationPaths): array
+    {
+        $filesystem = new Filesystem();
+        $vendor = Path::join($this->directory, 'vendor');
+
+        return array_keys(array_filter(
+            $migrationPaths,
+            // Doctrine fails on a configured directory that does not exist, and Git keeps no empty one.
+            fn (string $path): bool => Path::isBasePath($this->directory, $path)
+                && !Path::isBasePath($vendor, $path)
+                && $filesystem->exists($path),
+        ));
+    }
+
     public function isProject(): bool
     {
         return $this->packageUnderTest() === null;

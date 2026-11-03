@@ -106,6 +106,20 @@ final class InstallCommand extends Command
             $runner->mustRun($application->consoleCommand('opendxp:deployment:classes-rebuild', '--create-classes', '-n', '-q'), $environment);
         }
 
+        // No installer marks the migrations of the application itself.
+        // They often load data objects, so they run after the classes exist.
+        $migrationPaths = $this->findMigrationPaths($application, $environment);
+
+        foreach ($application->migrationNamespacesOfApplication($migrationPaths) as $namespace) {
+            $output->writeln('Running the migrations of ' . $namespace);
+            $runner->mustRun($application->consoleCommand(
+                'doctrine:migrations:migrate',
+                '--prefix=' . $namespace . '\\',
+                '--allow-no-migration',
+                '-n',
+            ), $environment);
+        }
+
         // PHPStan reads the container file that only a debug boot writes.
         $output->writeln('Warming the cache');
         $runner->mustRun($application->consoleCommand('cache:warmup', '-q'), [...$environment, 'APP_DEBUG' => '1']);
@@ -132,5 +146,25 @@ final class InstallCommand extends Command
         }
 
         return $uninstalled;
+    }
+
+    /**
+     * @param array<string, string> $environment
+     *
+     * @return array<string, string>
+     */
+    private function findMigrationPaths(TestApplication $application, array $environment): array
+    {
+        $configuration = new Process(
+            $application->consoleCommand('debug:config', 'doctrine_migrations', '--format=json'),
+            $application->directory,
+            $environment,
+        );
+
+        $configuration->mustRun();
+
+        $configured = json_decode($configuration->getOutput(), true, flags: JSON_THROW_ON_ERROR);
+
+        return $configured['doctrine_migrations']['migrations_paths'];
     }
 }
