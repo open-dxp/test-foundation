@@ -156,7 +156,8 @@ final class TestKernel extends Kernel
 
 > [!NOTE]
 > `opendxp-test install` runs the project's own migrations after it creates the data object classes.
-> Migrations in `vendor/` or in a bundle belong to a package. Its installer marks them as executed.
+> Migrations in `vendor/` or in a bundle belong to a package. A package with an installer marks them as executed.
+> The migrations of a bundle without an installer run on the installation.
 
 ## Run the tests
 

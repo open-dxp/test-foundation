@@ -42,8 +42,7 @@ final class InstallCommand extends Command
         $runner = new ProcessRunner($output, $application->directory);
         $database = DatabaseConnection::fromUrl($_SERVER['DATABASE_URL'] ?? '');
 
-        // Without debug, a command does not compile the container again after a bundle install changed the
-        // configuration.
+        // Without debug, a command does not compile the container again after a bundle install changed the configuration.
         $environment = [...$application->consoleEnvironment(), 'APP_DEBUG' => '0'];
 
         // The installers write the definitions they ship over the ones a project changed.
@@ -92,26 +91,10 @@ final class InstallCommand extends Command
             ));
         }
 
-        foreach ($application->migrationNamespacesOfPackageUnderTest() as $namespace) {
-            try {
-                $runner->mustRun(
-                    $application->consoleCommand('doctrine:migrations:up-to-date', '--prefix=' . $namespace . '\\'),
-                    $environment,
-                );
-            } catch (RuntimeException) {
-                throw new RuntimeException(sprintf(
-                    'The installation leaves migrations of %s to run. '
-                    . 'The installer calls markMigrationsAsExecuted() in install().',
-                    $namespace,
-                ));
-            }
-        }
-
         $runner->mustRun($application->consoleCommand('assets:install', 'public', '-q'), $environment);
 
         $classDefinitions = Path::join($application->directory, 'var/classes');
-        $hasClasses = $filesystem->exists($classDefinitions)
-            && Finder::create()->files()->in($classDefinitions)->depth(0)->name('definition_*.php')->hasResults();
+        $hasClasses = $filesystem->exists($classDefinitions) && Finder::create()->files()->in($classDefinitions)->depth(0)->name('definition_*.php')->hasResults();
 
         if ($hasClasses) {
             $output->writeln('Creating the data object classes');
@@ -121,21 +104,49 @@ final class InstallCommand extends Command
             );
         }
 
-        // No installer marks the migrations of the application itself.
+        $bundles = $this->loadBundles($application, $environment);
+        $migrationNamespaces = [];
+
+        foreach ($application->migrationNamespacesOfPackageUnderTest() as $namespace) {
+            if (!$this->isMarkedByInstaller($namespace, $bundles)) {
+                $migrationNamespaces[] = $namespace;
+
+                continue;
+            }
+
+            try {
+                $runner->mustRun($application->consoleCommand(
+                    'doctrine:migrations:up-to-date',
+                    sprintf('--prefix=%s\\', $namespace),
+                ), $environment);
+            } catch (RuntimeException) {
+                throw new RuntimeException(sprintf(
+                    'The installation leaves migrations of %s to run. '
+                    . 'The installer calls markMigrationsAsExecuted() in install().',
+                    $namespace,
+                ));
+            }
+        }
+
+        // No installer marks the migrations of the application or of a bundle without an installer.
         // They often load data objects, so they run after the classes exist.
         $migrationPaths = $this->findMigrationPaths($application, $environment);
 
-        foreach ($application->migrationNamespacesOfApplication($migrationPaths) as $namespace) {
+        $migrationNamespaces = [
+            ...$migrationNamespaces,
+            ...$application->migrationNamespacesOfApplication($migrationPaths),
+        ];
+
+        foreach ($migrationNamespaces as $namespace) {
             $output->writeln('Running the migrations of ' . $namespace);
             $runner->mustRun($application->consoleCommand(
                 'doctrine:migrations:migrate',
-                '--prefix=' . $namespace . '\\',
+                sprintf('--prefix=%s\\', $namespace),
                 '--allow-no-migration',
                 '-n',
             ), $environment);
         }
 
-        // PHPStan reads the container file that only a debug boot writes.
         $output->writeln('Warming the cache');
         $runner->mustRun($application->consoleCommand('cache:warmup', '-q'), [...$environment, 'APP_DEBUG' => '1']);
 
@@ -149,22 +160,48 @@ final class InstallCommand extends Command
      */
     private function findUninstalledBundles(TestApplication $application, array $environment): array
     {
-        $bundleList = new Process(
-            $application->consoleCommand('opendxp:bundle:list', '--json'),
-            $application->directory,
-            $environment,
-        );
-        $bundleList->mustRun();
-
         $uninstalled = [];
 
-        foreach (json_decode($bundleList->getOutput(), true, flags: JSON_THROW_ON_ERROR) as $bundle) {
+        foreach ($this->loadBundles($application, $environment) as $bundle) {
             if ($bundle['Enabled'] && $bundle['Installable'] && !$bundle['Installed']) {
                 $uninstalled[] = $bundle['Bundle'];
             }
         }
 
         return $uninstalled;
+    }
+
+    /**
+     * @param array<string, string> $environment
+     *
+     * @return list<array{Bundle: string, Enabled: bool, Installed: bool, Installable: bool, Uninstallable: bool}>
+     */
+    private function loadBundles(TestApplication $application, array $environment): array
+    {
+        $bundleList = new Process(
+            $application->consoleCommand('opendxp:bundle:list', '--json', '--fully-qualified-classnames'),
+            $application->directory,
+            $environment,
+        );
+        $bundleList->mustRun();
+
+        return json_decode($bundleList->getOutput(), true, flags: JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param list<array{Bundle: string, Installable: bool, Uninstallable: bool}> $bundles
+     */
+    private function isMarkedByInstaller(string $migrationNamespace, array $bundles): bool
+    {
+        foreach ($bundles as $bundle) {
+            $bundleNamespace = substr($bundle['Bundle'], 0, (int) strrpos($bundle['Bundle'], '\\'));
+
+            if (str_starts_with($migrationNamespace, $bundleNamespace . '\\')) {
+                return $bundle['Installable'] || $bundle['Uninstallable'];
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.2.9
+- [BUGFIX] `opendxp-test install` runs the migrations of a bundle without an installer
 - [BUGFIX] A request through `Container::testClient()` is the main request, so OpenDXP reads its locale
 
 ## 1.2.8
