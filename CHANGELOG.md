@@ -2,6 +2,7 @@
 
 ## 1.2.10
 - [CHORE] Check dependencies, code and commits for security issues
+- [CHORE] Require playwright-php 1.5.1. A `waitForURL()` no longer holds back the responses the page waits for
 
 ## 1.2.9
 - [BUGFIX] `opendxp-test install` runs the migrations of a bundle without an installer
