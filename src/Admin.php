@@ -6,6 +6,7 @@ namespace OpenDxp\TestFoundation;
 
 use OpenDxp\Model\User;
 use OpenDxp\Security\User\User as SecurityUser;
+use OpenDxp\Security\User\UserLoader;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
@@ -25,5 +26,8 @@ final class Admin
         Container::get(TokenStorageInterface::class)->setToken(
             new UsernamePasswordToken($securityUser, self::FIREWALL, $securityUser->getRoles()),
         );
+
+        // The user loader keeps the first user it finds. A request starts with a new one, but a test does not.
+        Container::get(UserLoader::class)->setUser($user);
     }
 }
