@@ -9,10 +9,22 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 trait BootKernelTrait
 {
-    /**
-     * @psalm-suppress TaintedCallable
-     */
     private static function bootKernel(): KernelInterface
+    {
+        $class = self::kernelClass();
+
+        $kernel = new $class('test', true);
+        $kernel->boot();
+
+        return $kernel;
+    }
+
+    /**
+     * @return class-string<KernelInterface>
+     *
+     * @psalm-taint-escape callable
+     */
+    private static function kernelClass(): string
     {
         $class = $_ENV['KERNEL_CLASS'] ?? $_SERVER['KERNEL_CLASS'] ?? getenv('KERNEL_CLASS');
 
@@ -20,14 +32,10 @@ trait BootKernelTrait
             throw new RuntimeException('KERNEL_CLASS names no kernel. Set it in the <php> section of phpunit.xml.');
         }
 
-        $kernel = new $class('test', true);
-
-        if (!$kernel instanceof KernelInterface) {
+        if (!is_a($class, KernelInterface::class, true)) {
             throw new RuntimeException(sprintf('%s is no kernel.', $class));
         }
 
-        $kernel->boot();
-
-        return $kernel;
+        return $class;
     }
 }
