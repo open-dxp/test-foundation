@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.12
+- [CHORE] The taint analysis of a bundle no longer reports the kernel class of `BootKernelTrait`. The class comes from `KERNEL_CLASS` in phpunit.xml
+
 ## 1.2.11
 - [BUGFIX] `Admin::actingAs()` also sets the user of the `UserLoader`. A second call in one test no longer leaves the first user in it
 
