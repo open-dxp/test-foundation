@@ -17,6 +17,7 @@ trait BootKernelTrait
             throw new RuntimeException('KERNEL_CLASS names no kernel. Set it in the <php> section of phpunit.xml.');
         }
 
+        /** @psalm-suppress TaintedCallable */
         $kernel = new $class('test', true);
 
         if (!$kernel instanceof KernelInterface) {
