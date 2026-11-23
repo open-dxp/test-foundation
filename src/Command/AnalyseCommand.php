@@ -48,7 +48,7 @@ final class AnalyseCommand extends Command
                 'baseline',
                 null,
                 InputOption::VALUE_NONE,
-                'Write the PHPStan baseline beside phpstan.neon instead of reporting',
+                'Write a baseline beside each PHPStan configuration instead of reporting',
             );
     }
 
@@ -65,18 +65,24 @@ final class AnalyseCommand extends Command
         $exitCodes = [self::SUCCESS];
 
         foreach ($this->selectChecks($toolConfigurations, $packageDirectory, $requestedCheck) as $check) {
-            $output->writeln(sprintf('<info>%s</info>', $check));
+            if ($check === self::LINT) {
+                $output->writeln(sprintf('<info>%s</info>', $check));
+                $exitCodes[] = $this->runLint($runner, $application, $packageDirectory);
 
-            $exitCodes[] = $check === self::LINT
-                ? $this->runLint($runner, $application, $packageDirectory)
-                : $this->runTool($runner, $application, $check, $toolConfigurations[$check], $writeBaseline);
+                continue;
+            }
+
+            foreach ($toolConfigurations[$check] as $configurationFile) {
+                $output->writeln(sprintf('<info>%s</info> %s', $check, basename($configurationFile)));
+                $exitCodes[] = $this->runTool($runner, $application, $check, $configurationFile, $writeBaseline);
+            }
         }
 
         return max($exitCodes) === self::SUCCESS ? self::SUCCESS : self::FAILURE;
     }
 
     /**
-     * @return array<string, string> tool => configuration file
+     * @return array<string, list<string>> tool => configuration files
      */
     private function findToolConfigurations(TestApplication $application, string $packageDirectory): array
     {
@@ -86,15 +92,32 @@ final class AnalyseCommand extends Command
             $configurationFile = $this->findConfigurationFile($application, $packageDirectory, $fileName);
 
             if ($configurationFile !== null) {
-                $toolConfigurations[$tool] = $configurationFile;
+                $toolConfigurations[$tool] = [$configurationFile];
             }
+        }
+
+        $phpstanFileNames = $this->readManifest($packageDirectory)['extra']['opendxp-test']['phpstan'] ?? null;
+
+        if ($phpstanFileNames === null) {
+            return $toolConfigurations;
+        }
+
+        $toolConfigurations['phpstan'] = [];
+
+        foreach ($phpstanFileNames as $fileName) {
+            $toolConfigurations['phpstan'][] = $this->findConfigurationFile($application, $packageDirectory, $fileName)
+                ?? throw new RuntimeException(sprintf(
+                    'extra.opendxp-test.phpstan lists %s. %s has no such file.',
+                    $fileName,
+                    $packageDirectory,
+                ));
         }
 
         return $toolConfigurations;
     }
 
     /**
-     * @param array<string, string> $toolConfigurations
+     * @param array<string, list<string>> $toolConfigurations
      *
      * @return list<string>
      */
@@ -190,21 +213,28 @@ final class AnalyseCommand extends Command
 
     private function isBundle(TestApplication $application, string $packageDirectory): bool
     {
-        $filesystem = new Filesystem();
-        $manifestFile = Path::join($packageDirectory, 'composer.json');
-
-        if (!$filesystem->exists($manifestFile)) {
-            return false;
-        }
-
-        $manifest = json_decode($filesystem->readFile($manifestFile), true, flags: JSON_THROW_ON_ERROR);
-        $packageName = $manifest['name'] ?? '';
+        $packageName = $this->readManifest($packageDirectory)['name'] ?? '';
 
         if ($packageName === '') {
             return false;
         }
 
-        return $filesystem->exists(Path::join($application->directory, 'vendor', $packageName));
+        return (new Filesystem())->exists(Path::join($application->directory, 'vendor', $packageName));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function readManifest(string $packageDirectory): array
+    {
+        $filesystem = new Filesystem();
+        $manifestFile = Path::join($packageDirectory, 'composer.json');
+
+        if (!$filesystem->exists($manifestFile)) {
+            return [];
+        }
+
+        return json_decode($filesystem->readFile($manifestFile), true, flags: JSON_THROW_ON_ERROR);
     }
 
     private function runTool(
@@ -228,7 +258,10 @@ final class AnalyseCommand extends Command
             $runner->mustRun($application->consoleCommand('cache:warmup', '-q'), [...$environment, 'APP_DEBUG' => '1']);
         }
 
-        $baseline = Path::join(Path::getDirectory($configurationFile), 'phpstan-baseline.neon');
+        $baseline = Path::join(
+            Path::getDirectory($configurationFile),
+            Path::getFilenameWithoutExtension($configurationFile) . '-baseline.neon',
+        );
         $baselineArguments = $writeBaseline ? ['--generate-baseline=' . $baseline] : [];
 
         $arguments = match ($tool) {
