@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.2.14
+- [ENHANCEMENT] `analyse` runs each PHPStan configuration in `extra.opendxp-test.phpstan`. See [Static analysis](README.md#static-analysis)
 - [ENHANCEMENT] `LoadFixtures` loads Foundry stories once per run, before the first test. See [Load stories once](README.md#load-stories-once)
 
 ## 1.2.13

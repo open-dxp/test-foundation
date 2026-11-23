@@ -616,6 +616,21 @@ parameters:
         containerXmlPath: %currentWorkingDirectory%/var/cache/test/TestContainerDebug.xml
 ```
 
+A package with more than one PHPStan configuration lists them in `extra.opendxp-test.phpstan`.
+`analyse` then runs only the listed files. A package that keeps `phpstan.neon` lists it as well.
+Without the list, `analyse` runs `phpstan.neon`.
+
+```json
+"extra": {
+    "opendxp-test": {
+        "phpstan": ["phpstan.neon", "phpstan-strict.neon"]
+    }
+}
+```
+
+Each configuration has its own baseline. The baseline of `phpstan-strict.neon` is
+`phpstan-strict-baseline.neon`.
+
 ## Composer keys
 
 | The package needs it                                | Key                           |
@@ -649,7 +664,7 @@ application uses.
 | `bundle <path> --opendxp <constraint>` | the same, with this version of `open-dxp/opendxp`                                                                   |
 | `install`                              | installs OpenDXP, the bundles and the data object classes, and warms the cache                                      |
 | `analyse <path> [check]`               | runs lint, and phpstan, deptrac and phparkitect where the package configures them                                   |
-| `analyse <path> --baseline`            | writes the PHPStan baseline next to `phpstan.neon`                                                                  |
+| `analyse <path> --baseline`            | writes a baseline next to each PHPStan configuration                                                                |
 
 Lint checks the container, the YAML configuration and the Twig templates. It lints the templates of
 a bundle in the test application. A project lints them in the environment it is deployed to. That
