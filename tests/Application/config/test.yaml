@@ -9,6 +9,9 @@ services:
         autoconfigure: true
         tags: ['controller.service_arguments']
 
+    OpenDxp\TestFoundation\Tests\Story\PreloadedPageStory:
+        autoconfigure: true
+
 twig:
     paths:
         '%kernel.project_dir%/tests/Application/templates': ~

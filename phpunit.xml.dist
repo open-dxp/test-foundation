@@ -16,6 +16,9 @@
     <extensions>
         <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
         <bootstrap class="Zenstruck\Foundry\PHPUnit\FoundryExtension"/>
+        <bootstrap class="OpenDxp\TestFoundation\PHPUnit\LoadFixtures">
+            <parameter name="fixtures" value="preloaded-page"/>
+        </bootstrap>
     </extensions>
     <php>
         <env name="KERNEL_CLASS" value="OpenDxp\TestFoundation\Tests\Application\TestKernel"/>

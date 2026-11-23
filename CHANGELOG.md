@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.14
+- [ENHANCEMENT] `LoadFixtures` loads Foundry stories once per run, before the first test. See [Load stories once](README.md#load-stories-once)
+
 ## 1.2.13
 - [ENHANCEMENT] A service tagged `opendxp.test_api` is public in every test application, wherever its package lies. A package tags the services of its test API with it
 
