@@ -23,7 +23,10 @@ final class LoadFixtures implements Extension
         ParameterCollection $parameters,
     ): void {
         $fixtures = $parameters->has('fixtures') ? explode(',', $parameters->get('fixtures')) : [];
-        $fixtures = array_values(array_filter(array_map(trim(...), $fixtures), strlen(...)));
+        $fixtures = array_values(array_filter(
+            array_map(trim(...), $fixtures),
+            static fn (string $fixture): bool => $fixture !== '',
+        ));
 
         if ($fixtures === []) {
             return;
