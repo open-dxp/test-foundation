@@ -482,6 +482,33 @@ final class InstallSearchIndex implements Extension
 
 Register the extension in `phpunit.xml.dist` after the extensions of DAMA and Foundry.
 
+### Load stories once
+
+A large story takes long to build in every test. Give it a fixture name with the `#[AsFixture]`
+attribute of Foundry and register it as a service with `autoconfigure`. `LoadFixtures` then loads it
+once, before the first test:
+
+```xml
+<extensions>
+    <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
+    <bootstrap class="Zenstruck\Foundry\PHPUnit\FoundryExtension"/>
+    <bootstrap class="OpenDxp\TestFoundation\PHPUnit\InstallDefinitions"/>
+    <bootstrap class="OpenDxp\TestFoundation\PHPUnit\LoadFixtures">
+        <parameter name="fixtures" value="catalog,shop"/>
+    </bootstrap>
+</extensions>
+```
+
+The parameter lists fixture names or groups of fixtures, separated by commas. Every test starts from
+the stories, and its transaction rolls back to them. Browser tests and the processes of
+`Concurrency::run()` see them as well.
+
+The stories run in a process of their own. A test therefore does not call them. It finds their
+objects in the database, for example by path.
+
+The stories stay in the database after the run. A run with stories therefore needs a freshly
+installed database, as in CI. The [testkit][testkit] restores one before every run.
+
 ### Files
 
 A test that cares about the size of a file and not about its content:
