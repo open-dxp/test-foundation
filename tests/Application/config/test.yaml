@@ -1,4 +1,9 @@
 services:
+    # A class from vendor, so only the tag makes it public.
+    test_api.filesystem:
+        class: Symfony\Component\Filesystem\Filesystem
+        tags: ['opendxp.test_api']
+
     OpenDxp\TestFoundation\Tests\Application\Controller\PageController:
         autowire: true
         autoconfigure: true

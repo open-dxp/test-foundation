@@ -399,6 +399,10 @@ Every service whose class the package under test or its tests define is public i
 application. Symfony would otherwise remove a private service that nothing injects, and a test could
 not fetch it. The services of other packages stay as they are.
 
+A package whose test API other packages use tags its services with `opendxp.test_api`. They are public in
+every test application, so a test fetches them wherever they come from. Outside a test they stay private, and
+Symfony removes them when nothing injects them.
+
 A service definition that only works because Symfony removes it shows up as an error here. Fix it
 in the package's own configuration.
 

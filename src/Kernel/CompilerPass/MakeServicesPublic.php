@@ -11,6 +11,11 @@ use Symfony\Component\DependencyInjection\Definition;
 final readonly class MakeServicesPublic implements CompilerPassInterface
 {
     /**
+     * Marks a service of a package's test API, which the tests of other packages fetch.
+     */
+    public const string TEST_API_TAG = 'opendxp.test_api';
+
+    /**
      * @param list<string> $directories
      */
     public function __construct(private array $directories)
@@ -18,7 +23,8 @@ final readonly class MakeServicesPublic implements CompilerPassInterface
     }
 
     /**
-     * Makes the services whose class lies in one of the directories public, so a test can fetch them.
+     * Makes the services whose class lies in one of the directories public, and every service of a test API, so a test
+     * can fetch them.
      */
     public function process(ContainerBuilder $container): void
     {
@@ -45,6 +51,10 @@ final readonly class MakeServicesPublic implements CompilerPassInterface
     {
         if ($definition->isAbstract() || $definition->isSynthetic()) {
             return false;
+        }
+
+        if ($definition->hasTag(self::TEST_API_TAG)) {
+            return true;
         }
 
         $class = $container->getParameterBag()->resolveValue($definition->getClass());

@@ -6,6 +6,7 @@ namespace OpenDxp\TestFoundation\Tests\Feature;
 
 use OpenDxp\Localization\LocaleServiceInterface;
 use OpenDxp\TestFoundation\Container;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
@@ -28,4 +29,8 @@ it('hands the locale of a request of the test client to OpenDXP', function () {
     Container::testClient()->request('GET', '/');
 
     expect($locale)->toBe('de');
+});
+
+it('hands out a service of another package that belongs to a test API', function () {
+    expect(Container::get('test_api.filesystem'))->toBeInstanceOf(Filesystem::class);
 });
