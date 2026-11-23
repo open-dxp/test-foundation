@@ -21,10 +21,7 @@ abstract class TestCase extends KernelTestCase
 {
     protected static function request(): Request
     {
-        $request = Request::create('/');
-        $request->setSessionFactory(static fn () => Container::sessionFactory()->createSession());
-
-        return $request;
+        return Container::createRequest();
     }
 
     protected static function debug(): bool
@@ -58,7 +55,7 @@ abstract class TestCase extends KernelTestCase
 
         Container::setFactory(static fn () => self::getContainer());
         Browser::reset();
-        Container::requestStack()->push(self::request());
+        Container::requestStack()->push(static::request());
 
         self::serveTheFrontend();
     }
