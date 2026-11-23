@@ -55,7 +55,7 @@ abstract class TestCase extends KernelTestCase
 
         Container::setFactory(static fn () => self::getContainer());
         Browser::reset();
-        Container::requestStack()->push(self::request());
+        Container::requestStack()->push(static::request());
 
         self::serveTheFrontend();
     }
