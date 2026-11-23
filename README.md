@@ -395,6 +395,13 @@ Container::get(PostManager::class);
 Container::parameter('acme_blog.posts_per_page');
 ```
 
+A dataset may fetch services as well. PHPUnit builds the datasets before the first test runs, so
+`Container` boots the test application once for them:
+
+```php
+dataset('domains', fn () => Container::get(DomainRegistry::class)->listNames());
+```
+
 Every service whose class the package under test or its tests define is public in the test
 application. Symfony would otherwise remove a private service that nothing injects, and a test could
 not fetch it. The services of other packages stay as they are.

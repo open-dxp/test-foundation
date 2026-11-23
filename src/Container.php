@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace OpenDxp\TestFoundation;
 
 use Closure;
-use LogicException;
+use OpenDxp\TestFoundation\PHPUnit\BootKernelTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionFactoryInterface;
 
 final class Container
 {
+    use BootKernelTrait;
+
     /**
      * @var Closure(): ContainerInterface|null
      */
@@ -41,6 +44,19 @@ final class Container
     public static function get(string $service): object
     {
         return self::container()->get($service);
+    }
+
+    /**
+     * Builds the request a test and a dataset run in.
+     *
+     * @internal called by the test case and for datasets
+     */
+    public static function createRequest(): Request
+    {
+        $request = Request::create('/');
+        $request->setSessionFactory(static fn () => self::sessionFactory()->createSession());
+
+        return $request;
     }
 
     public static function requestStack(): RequestStack
@@ -73,9 +89,22 @@ final class Container
 
     private static function container(): ContainerInterface
     {
-        return (self::$container ?? throw new LogicException(
-            'No application is running. A test reaching for a service must extend a test case of '
-            . 'this package, which hands the container over when it boots.'
-        ))();
+        // PHPUnit reads the datasets while it builds the suite, before the first test boots its kernel.
+        self::$container ??= self::bootForDatasets();
+
+        return (self::$container)();
+    }
+
+    /**
+     * @return Closure(): ContainerInterface
+     */
+    private static function bootForDatasets(): Closure
+    {
+        $container = self::bootKernel()->getContainer()->get('test.service_container');
+
+        // Many OpenDXP services read the current request, so a dataset gets the one a test gets.
+        $container->get('request_stack')->push(self::createRequest());
+
+        return static fn (): ContainerInterface => $container;
     }
 }

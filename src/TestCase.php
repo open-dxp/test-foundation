@@ -21,10 +21,7 @@ abstract class TestCase extends KernelTestCase
 {
     protected static function request(): Request
     {
-        $request = Request::create('/');
-        $request->setSessionFactory(static fn () => Container::sessionFactory()->createSession());
-
-        return $request;
+        return Container::createRequest();
     }
 
     protected static function debug(): bool

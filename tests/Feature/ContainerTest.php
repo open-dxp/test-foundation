@@ -34,3 +34,7 @@ it('hands the locale of a request of the test client to OpenDXP', function () {
 it('hands out a service of another package that belongs to a test API', function () {
     expect(Container::get('test_api.filesystem'))->toBeInstanceOf(Filesystem::class);
 });
+
+it('hands a dataset the services of the test application', function (string $environment) {
+    expect($environment)->toBe('test');
+})->with(fn (): array => [Container::environment()]);
