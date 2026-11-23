@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.13
+- [ENHANCEMENT] A service tagged `opendxp.test_api` is public in every test application, wherever its package lies. A package tags the services of its test API with it
+
 ## 1.2.12
 - [CHORE] The taint analysis of a bundle no longer reports the kernel class of `BootKernelTrait`. The class comes from `KERNEL_CLASS` in phpunit.xml
 
