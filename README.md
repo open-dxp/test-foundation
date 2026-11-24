@@ -386,6 +386,16 @@ opendxp:
         enabled: true
 ```
 
+Symfony takes `security.access_control` only once. The test application therefore reads its access
+rules from the parameter `opendxp_test.access_control`. An environment replaces them there:
+
+```yaml
+parameters:
+    opendxp_test.access_control:
+        - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_OPENDXP_USER }
+```
+
 ## Services
 
 `Container` hands out the services of the running application:
