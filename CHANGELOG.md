@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.15
+- [ENHANCEMENT] A test environment replaces the access rules of the test application through the parameter `opendxp_test.access_control`. See [Another configuration](README.md#another-configuration)
+
 ## 1.2.14
 - [BUGFIX] A test case that overrides `request()` runs its tests in that request instead of the default one
 - [ENHANCEMENT] `analyse` runs each PHPStan configuration in `extra.opendxp-test.phpstan`. See [Static analysis](README.md#static-analysis)
