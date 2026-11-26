@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.16
+- [ENHANCEMENT] The bundle test app has a front controller, so a web server can serve it with the test kernel
+
 ## 1.2.15
 - [ENHANCEMENT] A test environment replaces the access rules of the test application through the parameter `opendxp_test.access_control`. See [Another configuration](README.md#another-configuration)
 
