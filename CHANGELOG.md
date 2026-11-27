@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.2.16
+- [BUGFIX] A test of another environment reads the system settings and the languages of that environment. It read those of the first kernel the process booted, and the tests after it read its settings
 - [ENHANCEMENT] The bundle test app has a front controller, so a web server can serve it with the test kernel
 
 ## 1.2.15
